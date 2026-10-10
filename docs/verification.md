@@ -62,10 +62,14 @@ Nächster Praxistest: am realen Haus/Farmbereich normal spielen, an mehreren Ort
 
 ## Ausgelieferte Datei
 
-Datei: `dist/afkc-director-addon-0.1.0-alpha.3.jar` — **61.394 Bytes**.
+Die öffentliche MIT-Fassung wurde am 10.10.2026 um etwa 22:55 Uhr Europe/Berlin mit `build --rerun-tasks` neu gebaut: **BUILD SUCCESSFUL**, Exitcode 0, alle **37 Unit-Tests** erneut ohne Fehler. Log: `.local/final-public-build.log`. Die 28 enthaltenen Programmklassen sind bytegleich zur zuvor vollständig mit dem Client getesteten Alpha.3; die Änderung betrifft Lizenz, NOTICE und Mod-Metadaten.
 
-SHA-256: `0c3f63afe7088d259ebbb227256ff644aa92ead0e8117d7c892cc8b2b98db976`.
+Datei: `dist/afkc-director-addon-0.1.0-alpha.3.jar` — **62.192 Bytes**.
 
-Archiv geprüft: 42 Einträge, client-only, Version alpha.3, exakte AFKC-Abhängigkeit, NOTICE vorhanden; keine Original-/Minecraft-Klassen, Testklassen, eingebetteten Fremd-JARs oder Audioassets. Original-JAR unverändert: `3b4b244a9fb68087f1c7a275bd5b54c5e65c6d311c5efab15f250b885d37e8a7`.
+SHA-256: `b992051f12427b9f2cde0535697e2b6de0414d1d81ec1f048c3cf91ec06d8e3a`.
 
-Die Original-JAR bleibt eine separate Abhängigkeit. Keine öffentliche Modrinth-Veröffentlichung ausgeführt.
+Archiv geprüft: 43 Einträge, client-only, Version alpha.3, exakte AFKC-Abhängigkeit, MIT-LICENSE und NOTICE vorhanden; keine Original-/Minecraft-Klassen, Testklassen, eingebetteten Fremd-JARs oder Audioassets. Original-JAR unverändert: `3b4b244a9fb68087f1c7a275bd5b54c5e65c6d311c5efab15f250b885d37e8a7`.
+
+Zwei weitere erfolgreiche isolierte Minecraft-Läufe erzeugten die [Video-Beispiele](video-comparison.md), einmal mit und einmal ohne geladenes Add-on. Beide fertigen MP4-Dateien wurden dekodiert und visuell anhand ihrer Bildfolgen kontrolliert: 24 Sekunden, 1280 × 720, H.264, 720 Frames, keine Audiospur. Das sind ausgewählte echte Aufnahmen, kein Nachweis einer allgemeinen ästhetischen Überlegenheit.
+
+Die Original-JAR bleibt eine separate Abhängigkeit. Download über das [öffentliche GitHub-Alpha-Release](https://github.com/Lugesmuges/afkc-director-addon/releases/tag/v0.1.0-alpha.3). Keine öffentliche Modrinth-Veröffentlichung ausgeführt.

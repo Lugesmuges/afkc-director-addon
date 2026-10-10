@@ -6,6 +6,8 @@ Kleine Zusatz-JAR für **AFK Cinematics 1.0.6+26.3** von **spunkyinsaan**. Das A
 
 ## Installation
 
+**[Download der Alpha-JAR und Beispielvideos](https://github.com/Lugesmuges/afkc-director-addon/releases/tag/v0.1.0-alpha.3)** · **[Quellcode / Mitarbeit](https://github.com/Lugesmuges/afkc-director-addon)**
+
 1. Minecraft **26.3**, Java **25**, Fabric Loader **0.19.5+** und Fabric API **0.162.0+26.3 oder neuer für 26.3** verwenden.
 2. `afk-cinematics-1.0.6+26.3.jar` und `afkc-director-addon-0.1.0-alpha.3.jar` in den `mods`-Ordner des Profils legen. Eine ältere Director-Add-on-JAR ersetzen. Keine `-sources.jar` installieren.
 3. Eine Welt oder einen Server betreten und bauen. Erfolgreiche Änderungen werden nach ungefähr einer Sekunde übernommen.
