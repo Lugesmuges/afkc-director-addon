@@ -1,0 +1,8 @@
+.local/
+.gradle/
+build/
+dist/
+run/
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+.superpowers/

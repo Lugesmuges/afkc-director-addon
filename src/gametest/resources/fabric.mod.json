@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "id": "afkc_director_test",
+  "version": "1.0.0",
+  "environment": "client",
+  "entrypoints": {"fabric-client-gametest": ["dev.creatorcinematics.director.DirectorGameTest"]}
+}

@@ -1,0 +1,7 @@
+{
+  "required": true,
+  "package": "dev.creatorcinematics.director.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": ["ActivityMixin", "PlacementMixin", "DirectorMixin", "ClientMixin"],
+  "injectors": { "defaultRequire": 1 }
+}

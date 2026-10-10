@@ -1,0 +1,6 @@
+{
+  "afkc_director.enabled": "Build-focused shots: %s",
+  "afkc_director.radius": "Camera radius: %s blocks",
+  "afkc_director.clear": "Clear this world's/dimension's places",
+  "afkc_director.note": "No music. Set AFK time in AFK Cinematics."
+}

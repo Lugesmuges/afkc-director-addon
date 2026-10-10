@@ -1,0 +1,53 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.17.21'
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.terraformersmc.com/releases/' }
+}
+
+dependencies {
+    minecraft 'com.mojang:minecraft:26.3'
+    implementation 'net.fabricmc:fabric-loader:0.19.5'
+    implementation 'net.fabricmc.fabric-api:fabric-api:0.162.0+26.3'
+    compileOnly files('afk-cinematics-1.0.6+26.3.jar')
+    runtimeOnly files('afk-cinematics-1.0.6+26.3.jar')
+    compileOnly 'com.terraformersmc:modmenu:21.0.0'
+    if (project.hasProperty('compat')) runtimeOnly fileTree('.local/compat-runtime') { include '*.jar' }
+    testImplementation platform('org.junit:junit-bom:5.12.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+    withSourcesJar()
+}
+tasks.withType(JavaCompile).configureEach { options.release = 25 }
+jar { from('NOTICE.md'); from('LICENSE') }
+test { useJUnitPlatform() }
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') { expand version: project.version }
+}
+
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = 'afkc_director_test'
+        enableGameTests = false
+        enableClientGameTests = true
+        eula = true
+    }
+}
+loom.runs.configureEach { vmArg '-XX:ActiveProcessorCount=4' }
+if (project.hasProperty('showcase')) {
+    loom.runs.configureEach {
+        vmArg "-Ddirector.showcase=${project.property('showcase')}"
+        vmArg "-Ddirector.showcase.root=${project.projectDir.absolutePath.replace('\\','/')}"
+        programArgs '--width', '1280', '--height', '720'
+        if (project.property('showcase') == 'before') vmArg '-Dfabric.debug.disableModIds=afkc_director'
+    }
+}
