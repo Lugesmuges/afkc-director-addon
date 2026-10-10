@@ -1,6 +1,6 @@
 # Echte Vergleichsaufnahmen
 
-Die MP4-Dateien im [Alpha-Release](https://github.com/Lugesmuges/afkc-director-addon/releases/tag/v0.1.0-alpha.3) sind echte Aufnahmen des Minecraft-Fensters. Sie zeigen eine eigens erzeugte Demo-Bauwelt, **nicht CraftAttack oder Heikos Bauwerke**. Es sind ausgewählte Beispiele, kein kontrollierter Qualitäts- oder Performance-Benchmark.
+Die MP4-Dateien im [Alpha-Release](https://github.com/Lugesmuges/afkc-director-addon/releases/tag/v0.1.0-alpha.4) sind echte Aufnahmen des Minecraft-Fensters. Sie zeigen eine eigens erzeugte Demo-Bauwelt, **nicht CraftAttack oder Heikos Bauwerke**. Es sind ausgewählte Beispiele, kein kontrollierter Qualitäts- oder Performance-Benchmark.
 
 ## Gleicher Aufbau
 
@@ -16,9 +16,9 @@ Weltaufbau und Teleports zur Vorbereitung gehören ausschließlich zum isolierte
 
 Windows Graphics Capture über FFmpeg `gfxcapture`, ausschließlich das Minecraft-Fenster. 1280 × 720, H.264, 30 Bilder/s im Ausgabeformat, ohne Audiospur. Keine KI-Bilder, keine nachgebauten Kamerafahrten, keine Zeitlupe, keine zusätzliche Bewegungsinterpolation. Die vorhandenen schwarzen Balken stammen aus AFK Cinematics; nur die erklärende Beschriftung wurde nachträglich ergänzt.
 
-Beide kurzen Videos sind jeweils 24 Sekunden lang: Sekunde 36 bis 60 der jeweiligen 72-sekündigen Fensteraufnahme, ungefähr 25 Sekunden nach dem manuellen Cinematic-Start. Jeweils ein durchgehender Ausschnitt, keine neu sortierten Shots. Die begrenzte Testhardware kann Aufnahme-Ruckler verursachen; die 30 Bilder/s im Dateiformat sind keine Zusage über die erreichte Spiel-Framerate.
+Beide kurzen Videos sind jeweils 48 Sekunden lang: Sekunde 12 bis 60 der jeweiligen 72-sekündigen Fensteraufnahme, kurz nach dem manuellen Cinematic-Start. Jeweils ein durchgehender Ausschnitt, keine neu sortierten Shots. Die begrenzte Testhardware kann Aufnahme-Ruckler verursachen; die 30 Bilder/s im Dateiformat sind keine Zusage über die erreichte Spiel-Framerate.
 
-Im ausgewählten Original-Ausschnitt wechseln brauchbare Bauplatzansichten mit längeren Himmelsaufnahmen. Mit Add-on bleibt der ausgewählte Ausschnitt am Bauplatz und zeigt ihn aus unterschiedlichen Winkeln. Auch der übrige Add-on-Lauf enthielt nahe Spieleransichten; nicht jede Einstellung ist automatisch eine gelungene Bauwerksaufnahme. Die Auswahl dient der Illustration und ersetzt keine Auswertung vieler zufälliger Durchläufe.
+Im ausgewählten Original-Ausschnitt wechseln brauchbare Bauplatzansichten mit längeren Himmelsaufnahmen. Die neue Alpha.4 ergänzt längere, ruhige Fahrten mit festem Blickpunkt. Auch damit sind nahe Spieleransichten möglich; nicht jede Einstellung ist automatisch eine gelungene Bauwerksaufnahme. Die Auswahl dient der Illustration und ersetzt keine Auswertung vieler zufälliger Durchläufe.
 
 ## Nachstellen
 

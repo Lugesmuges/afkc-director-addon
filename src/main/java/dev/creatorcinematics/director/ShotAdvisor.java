@@ -9,6 +9,7 @@ public final class ShotAdvisor {
         boolean visible(Point from,Point focus);
         default boolean unobstructed(Point from,Point to){return clear(from,to);}
         default boolean lensClear(Point from,Point to){return unobstructed(from,to);}
+        default boolean framingClear(Point camera,Point direction,double fov,double aspect){return true;}
         default Point surface(Point camera,Point focus,Point min,Point max){return focus;}
     }
     public record Advice(Point camera,Point focus) { }

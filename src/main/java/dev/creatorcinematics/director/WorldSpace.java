@@ -61,6 +61,17 @@ public final class WorldSpace implements ShotAdvisor.Space {
         }
         return true;
     }
+    @Override public boolean framingClear(Point camera,Point direction,double fov,double aspect){
+        if(client.level==null)return false;
+        for(var entity:client.level.getEntities((net.minecraft.world.entity.Entity)null,new AABB(vec(camera),vec(camera)).inflate(4),
+                entity->entity instanceof net.minecraft.world.entity.LivingEntity && !entity.isSpectator() && !entity.isInvisible())){
+            var box=entity.getBoundingBox();
+            if(ray(camera,point(box.getCenter())).getType()!=HitResult.Type.MISS)continue;
+            if(FrameQuality.croppedActor(camera,direction,fov,aspect,new Point(box.minX,box.minY,box.minZ),
+                    new Point(box.maxX,box.maxY,box.maxZ)))return false;
+        }
+        return true;
+    }
     @Override public Point surface(Point camera,Point focus,Point min,Point max) {
         int steps=Math.max(1,(int)Math.ceil(camera.distance(focus)));
         for(int i=0;i<=steps;i++)if(!loaded(camera.lerp(focus,(double)i/steps)))return null;

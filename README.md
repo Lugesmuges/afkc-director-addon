@@ -1,33 +1,35 @@
-# AFKC Director Add-on — Alpha 0.1.0-alpha.3
+# AFKC Director Add-on — Alpha 0.1.0-alpha.4
 
-Kleine Zusatz-JAR für **AFK Cinematics 1.0.6+26.3** von **spunkyinsaan**. Das Add-on merkt sich Baugebiete, Aufenthalte und wiederkehrende AFK-Plätze und berät die vorhandenen Kamerapresets. AFK Cinematics behält Interpolation, Blickdrehung, reguläre Shot-Dauer, FOV, schwarze Balken und Übergänge. Gelegentliche kurze Gangfahrten ergänzen bewegte Zielpunkte; nur dort ersetzt die Wegführung die ursprüngliche Seitenschwingung. Die „Made by“-Texteinblendung ist ausgeblendet, die Autorennennung in den Mod-Informationen bleibt erhalten.
+Kleine Zusatz-JAR für **AFK Cinematics 1.0.6+26.3** von **spunkyinsaan**. Das Add-on merkt sich Baugebiete, Aufenthalte und wiederkehrende AFK-Plätze und berät die vorhandenen Kamerapresets. Seit Alpha.4 ersetzen langsame Heran-, Heraus-, Seitwärts- und kleine Aufwärtsfahrten das ursprüngliche Pendeln. Ein Motiv bleibt über die gesamte Einstellung fest. AFK Cinematics behält die Interpolation zwischen Renderbildern, AFK-Erkennung, FOV, schwarze Balken sowie Ein- und Ausstieg. Die „Made by“-Texteinblendung ist ausgeblendet, die Autorennennung in den Mod-Informationen bleibt erhalten.
 
 **Keine zusätzlichen Sounds oder Musik.** AFKC-Musik wird unterdrückt, auch ausdrücklich gewählte Musik per Original-Befehl. Minecraft-, Regen-, Sound-Mod- und Voice-Chat-Audio werden nicht verändert. Die Original-JAR bleibt unverändert und muss separat installiert sein.
 
 ## Installation
 
-**[Download der Alpha-JAR und Beispielvideos](https://github.com/Lugesmuges/afkc-director-addon/releases/tag/v0.1.0-alpha.3)** · **[Quellcode / Mitarbeit](https://github.com/Lugesmuges/afkc-director-addon)**
+**[Download der Alpha-JAR und Beispielvideos](https://github.com/Lugesmuges/afkc-director-addon/releases/tag/v0.1.0-alpha.4)** · **[Quellcode / Mitarbeit](https://github.com/Lugesmuges/afkc-director-addon)**
 
 1. Minecraft **26.3**, Java **25**, Fabric Loader **0.19.5+** und Fabric API **0.162.0+26.3 oder neuer für 26.3** verwenden.
-2. `afk-cinematics-1.0.6+26.3.jar` und `afkc-director-addon-0.1.0-alpha.3.jar` in den `mods`-Ordner des Profils legen. Eine ältere Director-Add-on-JAR ersetzen. Keine `-sources.jar` installieren.
+2. `afk-cinematics-1.0.6+26.3.jar` und `afkc-director-addon-0.1.0-alpha.4.jar` in den `mods`-Ordner des Profils legen. Eine ältere Director-Add-on-JAR ersetzen. Keine `-sources.jar` installieren.
 3. Eine Welt oder einen Server betreten und bauen. Erfolgreiche Änderungen werden nach ungefähr einer Sekunde übernommen.
 4. In der Nähe bleiben und `/afkc start` verwenden oder auf den normalen AFK-Start warten. Eingabe beendet die Aufnahme wie im Original.
-5. Einstellungen über **Mod Menu → AFKC Director Add-on** oder `/afkdirector settings`. AFK-Zeit, Bewegungseinstellungen und Balken werden weiterhin in AFK Cinematics eingestellt.
+5. Einstellungen über **Mod Menu → AFKC Director Add-on** oder `/afkdirector settings`. AFK-Zeit und Balken werden weiterhin in AFK Cinematics eingestellt. Die neuen ruhigen Fahrten sind bei aktiviertem Add-on automatisch aktiv; die ursprüngliche Shake-Stärke beeinflusst sie nicht.
 
 Nur auf dem Client installieren. Kein Server-Plugin, keine eigenen Netzwerkpakete, keine Spielerbewegung. Serverregeln für entfernte Kameras gelten weiterhin.
 
 **Survival ohne OP:** Kreativmodus, Cheats und Adminrechte sind keine Voraussetzungen. `/afkdirector` und der Originalbefehl `/afkc start` werden clientseitig verarbeitet. Das Add-on beobachtet vorhandene Blöcke und normale Spieleraktionen; es baut, fliegt oder teleportiert den Spieler nicht. Die Weltaufbau-Befehle im Testcode werden ausschließlich vom isolierten Testserver ausgeführt und stecken nicht in der ausgelieferten JAR.
 
-## Intelligenteres Motiv, originale Kamerafahrt
+## Intelligenteres Motiv und ruhige Kamerafahrten
 
 - Eigene bestätigte Platzierungen und Abbauten sowie qualifizierte Aufenthalte bilden die Motiv-Erinnerung. Kurzes Durchlaufen zählt nicht wie Verweilen. Ein tatsächlicher Cinematic-Start merkt den Platz; die anschließende AFK-Dauer sammelt keine weiteren Aufenthaltspunkte.
 - Aktuelle Aktivität verliert stufenlos Gewicht (Startwert: zehn Minuten Halbwertszeit, keine 30-Minuten-Abschneidegrenze). Bauprojekte bleiben separat gespeichert. Wiederholte AFK-Besuche zählen über Sessions hinweg; eine einzelne lange Abwesenheit zählt nicht als viele Besuche. Die Startwerte sind begründete Heuristiken: [Recherche und Schwellenwerte](docs/activity-research.md).
 - Benachbarte Bauzellen werden zu größeren Projekten zusammengefasst. So bleibt ein über Stunden gebautes Haus ein Motiv; die Auswahl reduziert sich nicht auf die letzten Blöcke.
-- Der Bildausschnitt wechselt zwischen dem zusammengefassten Projekt, einzelnen Bereichen und Umgebung. Original-Presets liefern unterschiedliche Distanzen, Höhen und Bewegung. Wenn möglich, wird der zuletzt benutzte Winkel vermieden. Originale Spieler-Orbits bleiben gelegentliche Aufnahmen der Figur.
-- Sitzen oder ein geschützter Standort bei Regen kann die zuletzt gewählte Blickrichtung als zusätzliches Motiv in die Folge aufnehmen. Es gibt keinen eigenen starren Cozy-Kameramodus; die Original-Kamera bleibt abwechslungsreich.
+- Der Bildausschnitt wechselt zwischen dem zusammengefassten Projekt, einzelnen Bereichen und Umgebung. Original-Presets liefern unterschiedliche Ausgangspositionen und Höhen. Wenn möglich, wird der zuletzt benutzte Winkel vermieden. Auch gelegentliche Figurenaufnahmen erhalten die ruhige Bewegung.
+- Normale Einstellungen dauern 10–14 Sekunden. Die Kamera fährt in einer durchgehenden Richtung mit sanftem Anfahren und Abbremsen; ihr Blick bleibt am gewählten Motiv. Heran- und Herausfahrten erzeugen einen Zoom-Eindruck mit räumlicher Tiefenwirkung, ohne den FOV pro Shot zu verändern. Kein künstliches Zittern, kein seitliches oder vertikales Pendeln.
+- Jede kurze Fahrt wird vor dem Schnitt auf freien Weg, Sicht und Kameraradius geprüft und während der Bewegung erneut abgesichert. Bei zu wenig Platz bleibt ein akzeptiertes Bild ruhig stehen. Neue Hindernisse beenden die Fahrt; die Kamera versucht nicht, sich mitten im Shot durch seitliche Korrekturen zu retten.
+- Sitzen oder ein geschützter Standort bei Regen kann die zuletzt gewählte Blickrichtung als zusätzliches Motiv in die Folge aufnehmen. Es gibt keinen eigenen starren Cozy-Kameramodus; Blickwinkel und Fahrtrichtung wechseln zwischen den Einstellungen.
 - Das Add-on schlägt nur nahe, freie Standpunkte vor. Es prüft geladene Geometrie, Weg zum Standpunkt und Sicht aufs Motiv. Jeder native Schnitt und die tatsächliche Blickrichtung werden zusätzlich auf nahe Hindernisse und sichtbare Figuren vor der Linse geprüft. Ein kleiner freier Spalt am Bildrand reicht nicht, wenn der Rest eine nahe Wand zeigt. Angepasste Bewegungen werden räumlich abgesichert. Bei ungeeigneter Sicht bleibt zunächst das letzte angenommene Bild stehen, während eine neue Aufnahme gesucht wird. Gibt es bereits zum Start keinen brauchbaren Standpunkt, bleibt die Spielansicht erhalten und ein neuer Versuch wartet die eingestellte AFK-Zeit ab.
 - Kurze, beobachtete Laufwege können gelegentlich zu Detailfahrten werden, auch um eine Ecke. Maximal fünf Blöcke Weg, geladene und aktuell erneut geprüfte Geometrie, innerhalb des Kameraradius. Die Original-Glättung steuert die Bewegung; an engen Ecken darf die Blickdrehung erst aufholen. Bei fehlender sicherer Strecke bleiben normale Aufnahmen zuständig.
-- Wenn kein geeigneter Vorschlag möglich ist, bleibt das Original-Preset unverändert. Große Bauwerke können aus engen Räumen oder mit begrenztem Kameraradius nur in Teilansichten gezeigt werden.
+- Wenn kein geeignetes Bau-Motiv gefunden wird, liefert das Original-Preset das Motiv; auch dann wird die Bewegung beruhigt. Große Bauwerke können aus engen Räumen oder mit begrenztem Kameraradius nur in Teilansichten gezeigt werden.
 - Freecam, Zoomify-Zoom, Flashback-Replay/-Export, fremde Kamera-Entity und Elytra-Flug haben Vorrang. Flashback-Aufnahme allein blockiert die Cinematic nicht.
 
 ## Befehle

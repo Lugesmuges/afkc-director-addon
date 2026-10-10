@@ -28,7 +28,13 @@ public final class DirectorGameTest implements FabricClientGameTest {
             var choose=director.getClass().getDeclaredMethod("chooseNextShot",net.minecraft.client.Minecraft.class);choose.setAccessible(true);
             var advised=director.getClass().getDeclaredField("afkcd$advised");advised.setAccessible(true);
             var rejected=director.getClass().getDeclaredField("afkcd$rejected");rejected.setAccessible(true);
-            for(int i=0;i<24;i++){choose.invoke(director,client);if(advised.getBoolean(director) && !rejected.getBoolean(director))return;}
+            var moveField=director.getClass().getDeclaredField("afkcd$move");moveField.setAccessible(true);
+            for(int i=0;i<24;i++){
+                choose.invoke(director,client);
+                var move=(CinematicMove)moveField.get(director);
+                if(advised.getBoolean(director) && !rejected.getBoolean(director) && move!=null
+                        && move.at(0).camera().distance(move.at(move.durationTicks()).camera())>0.3)return;
+            }
             throw new AssertionError("Native presets never accepted a build framing hint");
         } catch(ReflectiveOperationException e){throw new AssertionError(e);}
     }
@@ -101,6 +107,9 @@ public final class DirectorGameTest implements FabricClientGameTest {
                 var hit=new BlockHitResult(new Vec3(3.5,65,0.5),Direction.UP,new BlockPos(3,64,0),false);
                 check(client.gameMode.useItemOn(client.player,InteractionHand.MAIN_HAND,hit).consumesAction(),"Placement did not succeed");
                 check(client.player.getMainHandItem().getCount()==63,"Survival placement did not consume the block");
+                Point close=WorldSpace.point(client.player.getEyePosition().add(0,0,-2));
+                check(!FrameQuality.acceptable(close,new Point(0,0,1),37,16.0/9,new WorldSpace(client)),
+                        "A large foreground player cropped by the frame was accepted");
             });
             context.waitTicks(20);
             context.runOnClient(client->{
@@ -115,9 +124,12 @@ public final class DirectorGameTest implements FabricClientGameTest {
                     var singleton=AfkCinematicsClient.class.getDeclaredField("instance");singleton.setAccessible(true);
                     var directorField=AfkCinematicsClient.class.getDeclaredField("cinematicDirector");directorField.setAccessible(true);
                     Object director=directorField.get(singleton.get(null));
+                    var shake=director.getClass().getDeclaredMethod("getSubtleShake",double.class);shake.setAccessible(true);
+                    check(((Vec3)shake.invoke(director,1.0)).lengthSqr()==0,
+                            "Enabled director still adds artificial camera shake");
                     var duration=director.getClass().getDeclaredField("currentShotDurationTicks");duration.setAccessible(true);
                     int ticks=duration.getInt(director);
-                    if(ticks<100 || ticks>120)regressions.add("Add-on replaced original shot timing: "+ticks);
+                    if(ticks<200 || ticks>280)regressions.add("Steady shot is too short or too long: "+ticks);
                     var credits=AfkCinematicsClient.class.getDeclaredField("creditsTicksRemaining");credits.setAccessible(true);
                     check(credits.getInt(singleton.get(null))==0,"Original on-screen credit is still enabled");
                 } catch(ReflectiveOperationException e){throw new AssertionError(e);}
@@ -135,8 +147,77 @@ public final class DirectorGameTest implements FabricClientGameTest {
             });
             context.runOnClient(DirectorGameTest::selectAdvisedShot);
             Vec3 nativeStart=context.computeOnClient(client->CinematicCameraRig.getInterpolatedPosition(1));
-            context.waitTicks(8);
-            context.runOnClient(client->check(CinematicCameraRig.getInterpolatedPosition(1).distanceTo(nativeStart)>0.0001,"Retargeted original preset stopped moving"));
+            final CinematicMove move=context.computeOnClient(client->{
+                try {
+                    var singleton=AfkCinematicsClient.class.getDeclaredField("instance");singleton.setAccessible(true);
+                    var directorField=AfkCinematicsClient.class.getDeclaredField("cinematicDirector");directorField.setAccessible(true);
+                    Object director=directorField.get(singleton.get(null));
+                    var path=director.getClass().getDeclaredField("afkcd$move");path.setAccessible(true);
+                    return (CinematicMove)path.get(director);
+                } catch(ReflectiveOperationException e){throw new AssertionError(e);}
+            });
+            double[] previousDistance={0};
+            for(int frame=0;frame<120;frame++){
+                context.waitTick();
+                context.runOnClient(client->{
+                    Point actual=WorldSpace.point(CinematicCameraRig.getInterpolatedPosition(1));
+                    Point from=move.at(0).camera(),line=move.at(move.durationTicks()).camera().subtract(from);
+                    Point delta=actual.subtract(from);
+                    double along=(delta.x()*line.x()+delta.y()*line.y()+delta.z()*line.z())/(line.length()*line.length());
+                    check(actual.distance(from.add(line.scale(along)))<0.00001,"Steady camera left its planned track");
+                    check(along>=previousDistance[0]-0.00001,"Steady camera reversed within a shot");previousDistance[0]=along;
+                    // Minecraft's lookup-table trigonometry does not return an exactly unit vector.
+                    Vec3 direction=Vec3.directionFromRotation(CinematicCameraRig.getInterpolatedPitch(1),CinematicCameraRig.getInterpolatedYaw(1)).normalize();
+                    Vec3 expected=WorldSpace.vec(move.at(0).focus().subtract(actual)).normalize();
+                    check(direction.dot(expected)>0.99999,"Steady camera aim drifted away from the locked subject: dot="+direction.dot(expected)
+                            +", direction="+direction+", expected="+expected+", camera="+actual+", focus="+move.at(0).focus());
+                });
+            }
+            context.runOnClient(client->{
+                double travelled=CinematicCameraRig.getInterpolatedPosition(1).distanceTo(nativeStart);
+                double planned=move.at(119).camera().distance(move.at(0).camera());
+                check(Math.abs(travelled-planned)<0.03,"Steady shot did not follow its planned travel: actual="+travelled+", planned="+planned);
+            });
+            context.runOnClient(client->{
+                try {
+                    var singleton=AfkCinematicsClient.class.getDeclaredField("instance");singleton.setAccessible(true);
+                    var directorField=AfkCinematicsClient.class.getDeclaredField("cinematicDirector");directorField.setAccessible(true);
+                    Object director=directorField.get(singleton.get(null));
+                    var cut=java.util.Arrays.stream(director.getClass().getDeclaredMethods())
+                            .filter(method->method.getName().endsWith("afkcd$validateCut")).findFirst().orElseThrow();cut.setAccessible(true);
+                    var advised=director.getClass().getDeclaredField("afkcd$advised");advised.setAccessible(true);advised.setBoolean(director,false);
+                    Vec3 shown=CinematicCameraRig.getInterpolatedPosition(1);
+                    float shownYaw=CinematicCameraRig.getInterpolatedYaw(1),shownPitch=CinematicCameraRig.getInterpolatedPitch(1);
+                    int radius=DirectorClient.CONFIG.radius;
+                    try {
+                        DirectorClient.CONFIG.radius=8;
+                        cut.invoke(director,client.player.getEyePosition().add(0,5,-12),0f,20f);
+                        if(CinematicCameraRig.getInterpolatedPosition(1).distanceTo(shown)>0.001)
+                            regressions.add("Out-of-range native fallback was shown before being rejected");
+                    } finally {
+                        DirectorClient.CONFIG.radius=radius;
+                        CinematicCameraRig.cutTo(shown,shownYaw,shownPitch);
+                    }
+                } catch(ReflectiveOperationException e){throw new AssertionError(e);}
+            });
+            context.runOnClient(DirectorGameTest::selectAdvisedShot);
+            context.waitTicks(40);
+            context.runOnClient(client->{
+                try {
+                    var singleton=AfkCinematicsClient.class.getDeclaredField("instance");singleton.setAccessible(true);
+                    var directorField=AfkCinematicsClient.class.getDeclaredField("cinematicDirector");directorField.setAccessible(true);
+                    Object director=directorField.get(singleton.get(null));
+                    var cut=java.util.Arrays.stream(director.getClass().getDeclaredMethods())
+                            .filter(method->method.getName().endsWith("afkcd$validateCut")).findFirst().orElseThrow();cut.setAccessible(true);
+                    cut.invoke(director,new Vec3(0,64,0),0f,0f); // Actual rejected cut into the solid floor.
+                    check(CinematicCameraRig.getInterpolatedPosition(0).distanceTo(CinematicCameraRig.getInterpolatedPosition(1))<1e-9,
+                            "A cut rejected from inside a guided tick did not freeze immediately");
+                } catch(ReflectiveOperationException e){throw new AssertionError(e);}
+            });
+            context.waitTick();
+            context.runOnClient(client->check(CinematicCameraRig.getInterpolatedPosition(0).distanceTo(CinematicCameraRig.getInterpolatedPosition(1))<1e-9,
+                    "Rejected shot replays the last movement on every render tick"));
+            context.runOnClient(DirectorGameTest::selectAdvisedShot);
             context.takeScreenshot("director-build-shot");
             context.waitTicks(200);
             context.takeScreenshot("director-next-angle");

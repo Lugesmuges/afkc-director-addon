@@ -1,75 +1,49 @@
-# Prüfprotokoll — 0.1.0-alpha.3
+# Prüfprotokoll — 0.1.0-alpha.4
 
-Stand: 10.10.2026. Minecraft 26.3, Java 25, Fabric Loader 0.19.5, Fabric API 0.162.0+26.3, Original AFK Cinematics 1.0.6+26.3. Historie: [alpha.2](verification-alpha2.md).
+Stand: 10.10.2026. Minecraft 26.3, Java 25, Fabric Loader 0.19.5, Fabric API 0.162.0+26.3, Original AFK Cinematics 1.0.6+26.3. Historie: [Alpha.3](verification-alpha3.md).
 
 ## Ergebnis
 
-Abschlusslauf `build runClientGameTest -Pcompat`: **BUILD SUCCESSFUL**, Exitcode **0**, abgeschlossen am **10.10.2026 um 22:21 Uhr Europe/Berlin**. Log: `.local/final-alpha3-validation.log`. **37 Unit-Tests ohne Fehler und vollständiger Client-GameTest bestanden.**
+`build runClientGameTest -Pcompat`: **BUILD SUCCESSFUL**, Exitcode **0**, abgeschlossen am **10.10.2026 um 23:23 Uhr Europe/Berlin**. Log: `.local/final-alpha4-validation.log`. **47 Unit-Tests ohne Fehler und vollständiger Client-GameTest bestanden.**
 
-Die abschließenden Screenshots wurden angesehen: Haus als Motiv, lesbare Einstellungen sowie Gangstart und Blick nach der Ecke. Der offene Gangverlauf bleibt sichtbar; die zuvor dominierende Gegenwand und der Spielerkopf vor der Linse sind in diesen korrigierten Testaufnahmen nicht mehr vorhanden. Das ist eine begrenzte visuelle Kontrolle der Testszene, keine allgemeine Qualitätsgarantie.
+## Änderung und Fehlernachweis
 
-Das Add-on bleibt rein clientseitig. Es ergänzt automatische Orts-Erinnerung, sichere kurze Gangfahrten und Bildprüfungen. AFKC behält Interpolation, Blickdrehung, normale Shot-Dauer, FOV und Balken/Übergänge. Nur bei einer geführten Gangfahrt ersetzen Wegziele die originale Seitenschwingung. Der Blick kann in einen freien Gangausgang vorausgehen; der Kameraweg wird dadurch nicht verlängert. Die „Made by“-Einblendung und AFKC-Musik werden unterdrückt, die Herkunftsnennung bleibt in NOTICE und Mod-Unterlagen erhalten.
+Die Alpha.3 verbesserte die Motivwahl, ließ aber außerhalb der Gangfahrten die ursprünglichen Pendelbewegungen und das künstliche Kamerazittern bestehen. Auf das visuelle Feedback hin werden normale Einstellungen nun als einzelne ruhige Fahrten mit festem Motiv geplant. Gestaltung und Quellen: [camera-motion.md](camera-motion.md).
 
-## Logiktests
+Der echte Minecraft-Test scheiterte zunächst mit `Enabled director still adds artificial camera shake` (`.local/steady-motion-red.log`). Nach der Umstellung wurde zusätzlich der wiederholte letzte Interpolationsschritt reproduziert: `Rejected shot replays the last movement on every render tick` (`.local/steady-motion-hold-red.log`). Beide Fälle sind im Abschlusslauf behoben.
 
-37 Tests in sieben Testklassen prüfen:
+Eine unabhängige Codeprüfung fand inkonsistente Radiusprüfung bei nicht beratenen Original-Presets. Der Schnitt wird jetzt schon vor dem Anzeigen abgelehnt, wenn Startposition, freier Weg vom Spieler, Sicht oder Bildprüfung nicht passen. Das verhindert kurze sichtbare Einstellungen, die erst im anschließenden Tick wegen des Radius abbrechen. Ein weiterer Review-Hinweis schloss denselben Interpolationsfehler bei direkt innerhalb einer Gangfahrt verworfenen Schnitten.
 
-- Dauerhafte, räumlich zusammengefasste Bauprojekte neben allmählich abklingender aktueller Aktivität. Große alte Projekte dürfen einen aktuellen nahen Aufenthalt nicht immer verdrängen; ein Sitzplatz innerhalb eines großen Projekts bleibt ein eigenes lokales Motiv.
-- Aufenthaltsqualifikation statt bloßem Durchlaufen, keine unbegrenzte Punktesammlung während der Cinematic, begrenzte AFK-Besuchswertung. Halbwertszeiten von 5/10/20 Minuten bestehen dieselben Szenarien; das beweist kein ästhetisches Optimum. Begründete Startwerte: [Recherche](activity-research.md).
-- Speicherung über Sessions, Trennung von Welt/Server und Dimension, beschädigte Dateien, Alpha.2-Migration, Kapazität von 2.048 Zellen und zulässige Dateigröße bei voller Belegung.
-- Unterschiedliche Motiv- und Winkelhinweise innerhalb des ursprünglichen Fokusbereichs, Ablehnung verdeckter/unzugänglicher Vorschläge.
-- Wegführung um eine Ecke bei originaler Positionsglättung, Unterbrechung bei neuer Geometrie, keine Verbindung über Teleports/Aktivitätspausen, begrenzter Wegspeicher und Kameraradius.
-- Streng freie Sicht bei Gangfahrten: Die Toleranz für sichtbare Oberflächen eines Bauprojekts darf hier keine Wanddurchsicht erlauben. Ein Blick in einen offenen Gangausgang bleibt hinter einer vorhandenen Endwand.
-- Hindernisse vor der Linse und am Bildrand, Figuren im unmittelbaren Blickfeld, nahe frontal bildfüllende Wände. Ein kleiner freier Bildrand genügt nicht; normale Seitenwände eines offenen schmalen Gangs dürfen trotzdem vorkommen.
-- Begrenztes erneutes Auswählen nach abgelehnten Shots, statt kompletter Motivsuche in jedem Tick.
+## Neue Prüfungen
 
-Neue Fehlerfälle wurden jeweils zunächst mit fehlschlagenden Tests reproduziert. Dazu gehören die örtliche Erinnerung im großen Projekt, verbotene Routen-Sichttoleranz, Neustartschleife, wandfüllendes Bild mit freiem Rand sowie die zu strenge Bewertung schmaler Gänge.
+- Sechs Logiktests für monotone Heran-/Herausfahrt, unterscheidbare Seiten-/Aufwärtsfahrten, festen Fokus, sanfte Beschleunigung/Verzögerung, begrenzte Geschwindigkeit, Radius und Hindernisse einschließlich verdeckter Wegmitte. Die bisherigen 37 Tests bleiben grün.
+- Vier weitere Logiktests prüfen große angeschnittene Vordergrundfiguren, vollständige Figuren, außerhalb des Bildes liegende Figuren und Schnittpunkte an der Kameraebene. Der echte Client-Test scheiterte vor der Korrektur mit `A large foreground player cropped by the frame was accepted` (`.local/cropped-actor-red.log`) und besteht jetzt. Eine gezielte unabhängige Prüfung dieser Ergänzung ergab keine wesentlichen Befunde.
+- 120 aufeinanderfolgende Minecraft-Ticks einer realen beratenen Einstellung: Kamera bleibt auf ihrer geraden Bahn, fährt nicht rückwärts und richtet sich auf dasselbe Motiv. Die Blickvektoren werden vor dem Winkelvergleich normalisiert, weil Minecraft hier trigonometrische Näherungswerte liefert.
+- Der tatsächlich zurückgelegte Weg wird mit dem geplanten Fortschritt verglichen. Eine vorherige pauschale Mindeststrecke von 0,3 Blöcken nach 120 Ticks war bei sicherheitsbedingt kürzeren Fahrten unzutreffend; kurze Fahrten müssen ebenso präzise ihrem geplanten Verlauf folgen.
+- Ein echter unzulässiger Schnitt wird mit unberatenem Original-Start außerhalb eines auf acht Blöcke begrenzten Radius versucht und darf nie angezeigt werden.
+- Ein Schnitt in den festen Boden wird verworfen. Die Render-Interpolation muss sofort und auch im nächsten Tick stillstehen, statt die vorherige Bewegung zu wiederholen.
+- Normale Einstellungen dauern 200–280 Ticks; die beobachtete kurze Gangfahrt behält 100–120 Ticks und erreicht weiterhin beide Schenkel der getesteten Ecke.
 
-## Tatsächlicher Minecraft-Lauf
+Der vollständige bestehende Integrationstest bleibt erhalten: Survival-Platzierung verbraucht einen Block, Client-Befehle ohne Berechtigungen, Start/Eingabeabbruch, keine AFKC-Musik/Credits, echte Freecam-Übergabe, fremde Kamera-Entity, FOV/HUD-Rückkehr, Dimensionswechsel und gespeicherte Projekte, Haus/Regen/Gang sowie abgelehnter Start im geschlossenen Raum ohne Neustartschleife.
 
-Ein isolierter Client mit temporärer Welt prüft folgende Abläufe. Weltaufbau-Befehle laufen ausschließlich im Testserver; sie sind nicht Bestandteil der ausgelieferten Mod.
+## Gemeinsam geladene Mods
 
-1. **Survival:** kein Kreativflug/`instabuild`, normale Platzierung verbraucht einen Block (64 → 63). Hebelbedienung mit einem Block in der Hand zählt nicht als Platzierung.
-2. **Ohne Client-Berechtigungen:** `PermissionSet.NO_PERMISSIONS`; echte Eingabe von `afkdirector off`, `afkdirector on` und `afkc start` durch den Client-Befehlsweg. Keine Voraussetzung für OP oder Cheats im Add-on.
-3. Start und Eingabeabbruch, native Shot-Dauer von 100–120 Ticks, weitere Bewegung nach angenommener Motivberatung. Originaler Credits-Timer bleibt null.
-4. Keine automatische oder ausdrücklich angeforderte AFKC-Musik; die Musiklautstärke bleibt unverändert.
-5. Tatsächliche Freecam-Aktivierung während der Startphase; FOV wird wiederhergestellt. Eine fremde Kamera-Entity erhält ebenfalls Vorrang.
-6. Ende der Cinematic beim Dimensionswechsel, keine falschen Welt-Motive, Wiederladen der Erinnerungen bei Rückkehr, leerer aktiver Speicher nach Disconnect.
-7. Vorhandenes Haus über sichtbare Oberflächen merken; Regen unter einem Dach; Einstellungsoberfläche.
-8. Echtes Gehen entlang eines niedrigen L-Gangs, automatisches Lernen des Aufenthalts und Kameraweg über beide Schenkel. Kein Dach-/Wandkontakt, keine initiale Kamera im Spieler und unveränderte native Shot-Dauer.
-9. Vollständig eingeschlossener enger Standort: Kamera startet nicht, HUD/FOV werden wiederhergestellt; nach 20 Ticks sind keine Start-/Fade-Timer mehr aktiv und es entsteht keine Neustartschleife. Vor dem Fix schlug genau dieser Test mit `inactivityTicks=520` fehl.
+Sodium **0.9.2+mc26.3**, Iris **1.11.7+mc26.3**, Entity Culling **1.11.3**, Mod Menu **21.0.0**, Freecam **1.5.0-alpha.2**, Zoomify **2.17.0+mc26.3**, Do a Barrel Roll **3.8.5**, Flashback **0.43.6**, jeweils mit Pflichtbibliotheken. Inventar und Hashes: [compatibility-lock.json](compatibility-lock.json). Gesamter Mitschnitt: [compatibility.md](compatibility.md).
 
-## Gemeinsam geladene Referenz-Mods
+Iris lief ohne aktives Shaderpack. Freecam wurde tatsächlich umgeschaltet; nicht jede Funktion aller anderen Mods wurde durchgespielt. Bestehende Entwicklungs-Refmap-, Realms-Testkonto- und Gradle-Deprecation-Warnungen bleiben vorhanden; grüner Test bedeutet kein völlig warnungsfreies Log.
 
-Sodium **0.9.2+mc26.3**, Iris **1.11.7+mc26.3**, Entity Culling **1.11.3**, Mod Menu **21.0.0**, Freecam **1.5.0-alpha.2**, Zoomify **2.17.0+mc26.3**, Do a Barrel Roll **3.8.5**, Flashback **0.43.6**, jeweils mit Pflichtbibliotheken. Versionen und Hashes: `compatibility-lock.json`. Der Abgleich zum gesamten Mitschnitt steht in [compatibility.md](compatibility.md).
+## Grenzen
 
-Iris läuft **ohne aktiviertes Shaderpack**. Freecam wurde tatsächlich umgeschaltet; Zoom-, Replay- und Export-Funktionen wurden nicht vollständig durchgespielt. Windows-Performancecounter-, Entwicklungs-Refmap- und Realms-Testkonto-Warnungen im Log bleiben dokumentierte Umgebungs-/Fremdmod-Warnungen; ein erfolgreicher Test bedeutet kein völlig warnungsfreies Log.
-
-## Unabhängige Codeprüfung
-
-Korrigiert wurden die Kombination aus nativer Standpunktverschiebung und zu großzügiger Sichttoleranz, ungebremste Wiederholungsversuche nach abgelehnten Schnitten, wiederholter erfolgloser Cinematic-Start sowie die Ablehnung eines eigentlich offenen schmalen Gangs. Die letzte gezielte Nachprüfung von Start-Reset, inneren Tiefenproben und vorausschauender Gang-Blickrichtung fand keine weiteren wesentlichen Fehler.
-
-## Grenzen und Praxistest
-
-- Kein Test auf CraftAttack oder einem anderen fremden Multiplayer-Server; das Testspiel läuft in Survival mit lokal entzogenen Client-Berechtigungen auf dem integrierten Testserver. Das ist keine Prüfung des konkreten Anti-Cheats oder eine Serverfreigabe.
-- Kein vollständiger Test des Creator-Packs mit Shader, keine FPS-/Frametime-Zusage. Modifizierte Blockformen und Entity-Culling können eine zusätzliche Sichtprüfung im echten Pack benötigen.
-- Die Bildprüfung ist eine geometrische Heuristik. Ein mehrere Blöcke entferntes, geometrisch zulässiges Motiv kann trotzdem langweilig sein. **Keine Garantie für durchgehend Apple-TV-artige Bildqualität.**
-- Die Screenshots der künstlichen Stein-/Holz-Testwelt sind technische Nachweise, kein ästhetischer Stream-Showcase. FOV und der konservative Kameraradius können Totalansichten großer Anlagen verhindern; sehr enge Räume können ganz ohne freigegebene Kamerafahrt bleiben.
-- Bauaktivität ist keine verlässliche Eigentumserkennung. Eine sehr spät vom Server abgelehnte Blockänderung kann zunächst mitgezählt werden. Alte/abgerissene Bauten oder Server-Weltresets benötigen gegebenenfalls `clear`.
-- Die Mod verändert keine Spielerposition, fordert keine zusätzlichen Chunks an und sendet keine eigenen Netzwerkpakete. Trotzdem gelten Serverregeln für entfernte Kameras.
-
-Nächster Praxistest: am realen Haus/Farmbereich normal spielen, an mehreren Orten verweilen, `/afkc start`; danach Gang/Ecke, Fenster, Regen-Sitzplatz und Rückkehr nach Relog prüfen. Mit dem tatsächlichen Shader und einer kurzen Stream-Aufzeichnung Bildausschnitt, Wiederholung, Kameratempo und Frametime beurteilen.
+- Keine Ausführung auf CraftAttack oder einem fremden Multiplayer-Server; kein Test des dortigen Anti-Cheats oder vollständigen Creator-Packs mit Shader.
+- Geometrische Sicherheitsprüfungen liefern keine Garantie für schöne Bildkomposition. Große Bauten können wegen FOV und Kameraradius weiterhin nur teilweise ins Bild passen.
+- Die Wegprüfung ist begrenzt und läuft vor dem Schnitt; keine gemessene FPS-/Frametime-Zusage für schwächere Hardware. Bei zu wenig Platz kann eine gültige Ansicht stehenbleiben.
+- Die [Beispielvideos](video-comparison.md) sind echte ausgewählte Demo-Aufnahmen, kein systematischer Qualitätsvergleich oder Performance-Benchmark.
+- Einstellungen, Bewegungsradius, Bau-Erinnerungen und clientseitiger Betrieb bleiben erhalten. Die Original-JAR wird weder geändert noch mitverteilt.
 
 ## Ausgelieferte Datei
 
-Die öffentliche MIT-Fassung wurde am 10.10.2026 um etwa 22:55 Uhr Europe/Berlin mit `build --rerun-tasks` neu gebaut: **BUILD SUCCESSFUL**, Exitcode 0, alle **37 Unit-Tests** erneut ohne Fehler. Log: `.local/final-public-build.log`. Die 28 enthaltenen Programmklassen sind bytegleich zur zuvor vollständig mit dem Client getesteten Alpha.3; die Änderung betrifft Lizenz, NOTICE und Mod-Metadaten.
+`dist/afkc-director-addon-0.1.0-alpha.4.jar` — **66.543 Bytes**.
 
-Datei: `dist/afkc-director-addon-0.1.0-alpha.3.jar` — **62.192 Bytes**.
+SHA-256: `50c78d44158b1232042cbf4f722c824f4945b4f30364e8054ad00707c6913bce`.
 
-SHA-256: `b992051f12427b9f2cde0535697e2b6de0414d1d81ec1f048c3cf91ec06d8e3a`.
-
-Archiv geprüft: 43 Einträge, client-only, Version alpha.3, exakte AFKC-Abhängigkeit, MIT-LICENSE und NOTICE vorhanden; keine Original-/Minecraft-Klassen, Testklassen, eingebetteten Fremd-JARs oder Audioassets. Original-JAR unverändert: `3b4b244a9fb68087f1c7a275bd5b54c5e65c6d311c5efab15f250b885d37e8a7`.
-
-Zwei weitere erfolgreiche isolierte Minecraft-Läufe erzeugten die [Video-Beispiele](video-comparison.md), einmal mit und einmal ohne geladenes Add-on. Beide fertigen MP4-Dateien wurden dekodiert und visuell anhand ihrer Bildfolgen kontrolliert: 24 Sekunden, 1280 × 720, H.264, 720 Frames, keine Audiospur. Das sind ausgewählte echte Aufnahmen, kein Nachweis einer allgemeinen ästhetischen Überlegenheit.
-
-Die Original-JAR bleibt eine separate Abhängigkeit. Download über das [öffentliche GitHub-Alpha-Release](https://github.com/Lugesmuges/afkc-director-addon/releases/tag/v0.1.0-alpha.3). Keine öffentliche Modrinth-Veröffentlichung ausgeführt.
+Archiv geprüft: **44 Einträge**, Version Alpha.4, client-only, exakte AFKC-Abhängigkeit, MIT-LICENSE und NOTICE. Keine Original-/Minecraft-Klassen, Testklassen, eingebetteten Fremd-JARs oder Audioassets. Öffentlicher Download: [GitHub-Alpha.4](https://github.com/Lugesmuges/afkc-director-addon/releases/tag/v0.1.0-alpha.4).

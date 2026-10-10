@@ -10,11 +10,12 @@ import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** Retarget native presets. AFKC still owns timing, oscillation, smoothing, FOV and rendering. */
+/** Retarget native presets and replace idle sway with deliberate, collision-checked travel. */
 @Mixin(targets="com.spunkyinsaan.afkcinematics.CinematicDirector",remap=false)
 public abstract class DirectorMixin {
     @Shadow private Vec3 shotBaseCamera,shotBaseFocus,shotRightAxis,shotUpAxis,cameraPosition,focusPosition;
-    @Shadow private int shotTicksRemaining;
+    @Shadow private int shotTicksRemaining,shotElapsedTicks,currentShotDurationTicks;
+    @Shadow private float cameraYaw,cameraPitch;
     @Shadow abstract void stop(Minecraft client);
     @Shadow private Vec3 enforceAboveGround(Player player,Vec3 point,double margin){return point;}
     @Shadow private Vec3 avoidBlockClipping(Player player,Vec3 camera,Vec3 focus,double margin){return camera;}
@@ -25,9 +26,11 @@ public abstract class DirectorMixin {
     @Unique private Point afkcd$lastShown;
     @Unique private final ShotRetry afkcd$retry=new ShotRetry();
     @Unique private boolean afkcd$failedStart;
+    @Unique private CinematicMove afkcd$move;
+    @Unique private int afkcd$moveSequence;
 
     @Inject(method="chooseNextShot",at=@At("HEAD"))
-    private void afkcd$begin(Minecraft client,CallbackInfo ci){afkcd$advised=false;afkcd$previous=null;afkcd$route=null;afkcd$rejected=false;}
+    private void afkcd$begin(Minecraft client,CallbackInfo ci){afkcd$advised=false;afkcd$previous=null;afkcd$route=null;afkcd$move=null;afkcd$rejected=false;}
 
     @Inject(method="configureShot",at=@At("TAIL"))
     private void afkcd$frame(Player player,@Coerce Object preset,CallbackInfo ci) {
@@ -74,13 +77,24 @@ public abstract class DirectorMixin {
     @Redirect(method={"chooseNextShot","refreshAfterPassiveMovement"},at=@At(value="INVOKE",target="Lcom/spunkyinsaan/afkcinematics/CinematicCameraRig;cutTo(Lnet/minecraft/world/phys/Vec3;FF)V"))
     private void afkcd$validateCut(Vec3 position,float yaw,float pitch){
         var client=Minecraft.getInstance();
-        boolean reachable=!afkcd$advised || client.player!=null && WorldSpace.point(position).distance(WorldSpace.point(client.player.getEyePosition()))<=DirectorClient.CONFIG.radius
-                && new WorldSpace(client).clear(WorldSpace.point(client.player.getEyePosition()),WorldSpace.point(position));
-        if(DirectorClient.CONFIG.enabled && (!reachable || !afkcd$goodFrame(position,yaw,pitch))){
-            afkcd$rejected=true;shotTicksRemaining=afkcd$retry.rejectedDelay();return;
+        if(DirectorClient.CONFIG.enabled){
+            var space=new WorldSpace(client);
+            boolean reachable=client.player!=null && WorldSpace.point(position).distance(WorldSpace.point(client.player.getEyePosition()))<=DirectorClient.CONFIG.radius
+                    && space.clear(WorldSpace.point(client.player.getEyePosition()),WorldSpace.point(position))
+                    && space.visible(WorldSpace.point(position),WorldSpace.point(focusPosition));
+            if(!reachable || !afkcd$goodFrame(position,yaw,pitch)){
+                afkcd$rejected=true;shotTicksRemaining=afkcd$retry.rejectedDelay();afkcd$holdFrame();return;
+            }
         }
         afkcd$retry.accepted();
         afkcd$lastShown=WorldSpace.point(position);
+        if(DirectorClient.CONFIG.enabled && afkcd$route==null && client.player!=null){
+            double aspect=(double)client.getWindow().getWidth()/Math.max(1,client.getWindow().getHeight());
+            afkcd$move=CinematicMove.plan(WorldSpace.point(position),WorldSpace.point(focusPosition),
+                    WorldSpace.point(client.player.getEyePosition()),DirectorClient.CONFIG.radius,
+                    afkcd$moveSequence++,new WorldSpace(client),client.options.fov().get(),aspect);
+            shotTicksRemaining=currentShotDurationTicks=afkcd$move.durationTicks();
+        }
         CinematicCameraRig.cutTo(position,yaw,pitch);
     }
     @Redirect(method="start",at=@At(value="INVOKE",target="Lcom/spunkyinsaan/afkcinematics/CinematicCameraRig;activate(Lnet/minecraft/world/phys/Vec3;FF)V"))
@@ -113,11 +127,35 @@ public abstract class DirectorMixin {
 
     @Inject(method="applyCurrentShot",at=@At("HEAD"),cancellable=true)
     private void afkcd$guide(Minecraft client,CallbackInfo ci){
-        if(afkcd$rejected){ci.cancel();return;}
+        if(afkcd$rejected){afkcd$holdFrame();ci.cancel();return;}
+        if(afkcd$move!=null && DirectorClient.CONFIG.enabled){
+            ci.cancel();
+            if(client.player==null || DirectorClient.foreignCamera(client))return;
+            var pose=afkcd$move.at(shotElapsedTicks);
+            Point next=pose.camera(),focus=pose.focus();
+            var space=new WorldSpace(client);
+            Vec3 look=WorldSpace.vec(focus.subtract(next));
+            float yaw=(float)Math.toDegrees(Math.atan2(look.z,look.x))-90;
+            float pitch=(float)-Math.toDegrees(Math.atan2(look.y,Math.hypot(look.x,look.z)));
+            if(next.distance(WorldSpace.point(client.player.getEyePosition()))>DirectorClient.CONFIG.radius
+                    || !space.clear(WorldSpace.point(cameraPosition),next) || !space.visible(next,focus)
+                    || !afkcd$goodFrame(WorldSpace.vec(next),yaw,pitch)){
+                // A new obstacle ends the shot; never reposition it sideways to "repair" the path.
+                shotTicksRemaining=0;
+                afkcd$holdFrame();
+                return;
+            }
+            cameraPosition=WorldSpace.vec(next);focusPosition=WorldSpace.vec(focus);
+            cameraYaw=yaw;cameraPitch=pitch;
+            afkcd$previous=afkcd$lastShown=next;
+            // AFKC still performs render-frame interpolation, startup/exit and its black bars.
+            CinematicCameraRig.update(cameraPosition,cameraYaw,cameraPitch);
+            return;
+        }
         if(afkcd$route==null)return;
         var hint=client.player==null || !DirectorClient.CONFIG.enabled || DirectorClient.foreignCamera(client)?null
                 :afkcd$route.next(WorldSpace.point(cameraPosition),WorldSpace.point(client.player.getEyePosition()),DirectorClient.CONFIG.radius,new WorldSpace(client));
-        if(hint==null){shotTicksRemaining=0;ci.cancel();return;}
+        if(hint==null){shotTicksRemaining=0;afkcd$holdFrame();ci.cancel();return;}
         shotBaseCamera=WorldSpace.vec(hint.camera());shotBaseFocus=WorldSpace.vec(hint.focus());
     }
     @Inject(method="enforceAboveGround",at=@At("HEAD"),cancellable=true)
@@ -126,8 +164,15 @@ public abstract class DirectorMixin {
         if(afkcd$route!=null)ci.setReturnValue(point);
     }
     @Inject(method="getSubtleShake",at=@At("HEAD"),cancellable=true)
-    private void afkcd$steadyInCorridor(double intensity,CallbackInfoReturnable<Vec3> ci){
-        if(afkcd$route!=null)ci.setReturnValue(Vec3.ZERO);
+    private void afkcd$steadyCamera(double intensity,CallbackInfoReturnable<Vec3> ci){
+        if(DirectorClient.CONFIG.enabled)ci.setReturnValue(Vec3.ZERO);
+    }
+
+    @Unique private void afkcd$holdFrame(){
+        // Updating both interpolation endpoints prevents the last step replaying every tick.
+        cameraPosition=CinematicCameraRig.getInterpolatedPosition(1);
+        cameraYaw=CinematicCameraRig.getInterpolatedYaw(1);cameraPitch=CinematicCameraRig.getInterpolatedPitch(1);
+        CinematicCameraRig.update(cameraPosition,cameraYaw,cameraPitch);
     }
 
     @Redirect(method={"applyCurrentShot","applyPlayerOrbitShot"},at=@At(value="INVOKE",target="Lcom/spunkyinsaan/afkcinematics/CinematicCameraRig;update(Lnet/minecraft/world/phys/Vec3;FF)V"))
@@ -139,14 +184,14 @@ public abstract class DirectorMixin {
                 cameraPosition=WorldSpace.vec(afkcd$previous);
                 CinematicCameraRig.update(cameraPosition,yaw,pitch);return;
             }
-            shotTicksRemaining=0;return;
+            shotTicksRemaining=0;afkcd$holdFrame();return;
         }
         if(afkcd$advised) {
             var client=Minecraft.getInstance();var space=new WorldSpace(client);Point next=WorldSpace.point(position);
             if(client.player==null || afkcd$previous==null || !DirectorClient.CONFIG.enabled
                     || next.distance(WorldSpace.point(client.player.getEyePosition()))>DirectorClient.CONFIG.radius
                     || !space.clear(afkcd$previous,next) || !space.visible(next,WorldSpace.point(focusPosition))) {
-                shotTicksRemaining=0;return;
+                shotTicksRemaining=0;afkcd$holdFrame();return;
             }
             afkcd$previous=next;
         }
@@ -154,5 +199,5 @@ public abstract class DirectorMixin {
         CinematicCameraRig.update(position,yaw,pitch);
     }
     @Inject(method="stop",at=@At("TAIL"))
-    private void afkcd$reset(Minecraft client,CallbackInfo ci){afkcd$advised=false;afkcd$previous=null;afkcd$route=null;afkcd$lastShown=null;afkcd$rejected=false;afkcd$retry.accepted();}
+    private void afkcd$reset(Minecraft client,CallbackInfo ci){afkcd$advised=false;afkcd$previous=null;afkcd$route=null;afkcd$move=null;afkcd$lastShown=null;afkcd$rejected=false;afkcd$retry.accepted();}
 }
