@@ -152,6 +152,16 @@ public final class DirectorClient implements ClientModInitializer {
         if(count>0){dirty=true;saveMemory();}
         return count;
     }
+    public static WideShot wideShot(Minecraft client,Point nativeCamera,int sequence) {
+        if(!CONFIG.enabled || !CONFIG.wideShots || client.player==null || client.level==null || foreignCamera(client))return null;
+        Point eye=WorldSpace.point(client.player.getEyePosition());
+        double aspect=(double)client.getWindow().getWidth()/Math.max(1,client.getWindow().getHeight());
+        for(var subject:MEMORY.ranked(eye,24,memoryTime()).stream().filter(ActivityMemory.Subject::built).limit(3).toList()){
+            var shot=WideShot.plan(subject,eye,nativeCamera,new WorldSpace(client),CONFIG.wideRadius,aspect,sequence);
+            if(shot!=null)return shot;
+        }
+        return null;
+    }
     public static ShotAdvisor.Advice advise(Minecraft client,Point nativeCamera) {
         if(!CONFIG.enabled || client.player==null || client.level==null || foreignCamera(client)) return null;
         Point eye=WorldSpace.point(client.player.getEyePosition());

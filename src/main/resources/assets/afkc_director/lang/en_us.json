@@ -2,5 +2,20 @@
   "afkc_director.enabled": "Build-focused shots: %s",
   "afkc_director.radius": "Camera radius: %s blocks",
   "afkc_director.clear": "Clear this world's/dimension's places",
-  "afkc_director.note": "No music. Set AFK time in AFK Cinematics."
+  "afkc_director.note": "Set AFK time in AFK Cinematics.",
+  "afkc_director.wide": "Building establishing shots: %s",
+  "afkc_director.wide_radius": "Max. establishing distance: %s blocks",
+  "afkc_director.stats": "Statistics cards: %s",
+  "afkc_director.web_stats": "CraftAttack web statistics: %s",
+  "afkc_director.auto": "Automatic",
+  "afkc_director.stats.playtime": "PLAYTIME",
+  "afkc_director.stats.walked": "ON FOOT",
+  "afkc_director.stats.distance": "DISTANCE",
+  "afkc_director.stats.blocks_broken": "BLOCKS MINED",
+  "afkc_director.stats.mobs_killed": "MOBS DEFEATED",
+  "afkc_director.stats.jumps": "JUMPS",
+  "afkc_director.stats.deaths": "DEATHS",
+  "afkc_director.stats.diamonds": "DIAMONDS",
+  "afkc_director.stats.source.minecraft": "Minecraft · World/server",
+  "afkc_director.stats.source.craftattack": "craftattack.one"
 }

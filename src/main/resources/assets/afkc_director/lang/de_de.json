@@ -2,5 +2,20 @@
   "afkc_director.enabled": "Bauorientierte Aufnahmen: %s",
   "afkc_director.radius": "Kameraradius: %s Blöcke",
   "afkc_director.clear": "Orte dieser Welt/Dimension löschen",
-  "afkc_director.note": "Ohne Musik. AFK-Zeit stellst du in AFK Cinematics ein."
+  "afkc_director.note": "AFK-Zeit stellst du in AFK Cinematics ein.",
+  "afkc_director.wide": "Gebäude-Totalen: %s",
+  "afkc_director.wide_radius": "Max. Abstand für Totalen: %s Blöcke",
+  "afkc_director.stats": "Statistik-Karten: %s",
+  "afkc_director.web_stats": "CraftAttack-Webwerte: %s",
+  "afkc_director.auto": "Automatisch",
+  "afkc_director.stats.playtime": "SPIELZEIT",
+  "afkc_director.stats.walked": "ZU FUSS UNTERWEGS",
+  "afkc_director.stats.distance": "STRECKE",
+  "afkc_director.stats.blocks_broken": "BLÖCKE ABGEBAUT",
+  "afkc_director.stats.mobs_killed": "KREATUREN BESIEGT",
+  "afkc_director.stats.jumps": "SPRÜNGE",
+  "afkc_director.stats.deaths": "TODE",
+  "afkc_director.stats.diamonds": "DIAMANTEN",
+  "afkc_director.stats.source.minecraft": "Minecraft · Welt/Server",
+  "afkc_director.stats.source.craftattack": "craftattack.one"
 }

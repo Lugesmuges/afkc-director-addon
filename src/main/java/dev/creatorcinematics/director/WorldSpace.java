@@ -12,6 +12,10 @@ public final class WorldSpace implements ShotAdvisor.Space {
     public WorldSpace(Minecraft client) { this.client=client; }
     public static Vec3 vec(Point p){return new Vec3(p.x(),p.y(),p.z());}
     public static Point point(Vec3 p){return new Point(p.x,p.y,p.z);}
+    @Override public double viewDistance(){
+        // The server can reduce the effective distance even when farther client chunks exist.
+        return client.options.getEffectiveRenderDistance()*16*.9;
+    }
     private boolean loaded(Point p) {
         if(client.level==null) return false;
         var pos=BlockPos.containing(p.x(),p.y(),p.z());
@@ -63,6 +67,11 @@ public final class WorldSpace implements ShotAdvisor.Space {
     }
     @Override public boolean framingClear(Point camera,Point direction,double fov,double aspect){
         if(client.level==null)return false;
+        if(!SceneContent.visible(direction,fov,aspect,rayDirection->{
+            Point end=camera.add(rayDirection.scale(viewDistance()));
+            var hit=client.level.clip(new ClipContext(vec(camera),vec(end),ClipContext.Block.COLLIDER,ClipContext.Fluid.ANY,client.player));
+            return hit.getType()==HitResult.Type.BLOCK && loaded(point(hit.getLocation()));
+        }))return false;
         for(var entity:client.level.getEntities((net.minecraft.world.entity.Entity)null,new AABB(vec(camera),vec(camera)).inflate(4),
                 entity->entity instanceof net.minecraft.world.entity.LivingEntity && !entity.isSpectator() && !entity.isInvisible())){
             var box=entity.getBoundingBox();

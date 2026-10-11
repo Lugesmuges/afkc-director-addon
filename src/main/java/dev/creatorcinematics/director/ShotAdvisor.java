@@ -5,6 +5,7 @@ import java.util.*;
 /** Supplies framing hints to AFKC. Contains no animation, shot timer, easing or audio. */
 public final class ShotAdvisor {
     public interface Space {
+        default double viewDistance(){return Double.POSITIVE_INFINITY;}
         boolean clear(Point from,Point to);
         boolean visible(Point from,Point focus);
         default boolean unobstructed(Point from,Point to){return clear(from,to);}

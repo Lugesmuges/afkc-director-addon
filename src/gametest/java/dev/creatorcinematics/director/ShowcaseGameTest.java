@@ -21,7 +21,7 @@ public final class ShowcaseGameTest implements FabricClientGameTest {
     @Override public void runTest(ClientGameTestContext context){
         String mode=System.getProperty("director.showcase");
         boolean enabled=FabricLoader.getInstance().isModLoaded("afkc_director");
-        if(enabled!=mode.equals("after"))throw new AssertionError("Comparison did not actually remove/load the add-on");
+        if(enabled==mode.equals("before"))throw new AssertionError("Comparison did not actually remove/load the add-on");
         Path output=Path.of(System.getProperty("director.showcase.root"),".local","showcase");
         try(var world=context.worldBuilder().create()){
             var server=world.getServer();world.getConnection().waitForChunksDownload();
@@ -87,6 +87,7 @@ public final class ShowcaseGameTest implements FabricClientGameTest {
                 });context.waitTicks(15);
             }
             command(server,"tp @a 2.5 66 0.5 -90 -8");
+            if(mode.equals("wide"))WideScene.setup(context,server);
             // Start at the capture size; live test-window resizing can leave the native blit cropped.
             context.runOnClient(client->{
                 client.options.pauseOnLostFocus=false;
@@ -105,7 +106,16 @@ public final class ShowcaseGameTest implements FabricClientGameTest {
             if(!Files.exists(output.resolve(mode+".go")))throw new AssertionError("Recording never started");
             context.runOnClient(client->client.getConnection().sendCommand("afkc start"));
             mark(output.resolve(mode+".started"),Long.toString(System.currentTimeMillis()));
-            context.waitTicks(1100);
+            context.waitTicks(40);
+            for(int i=0;i<53;i++){
+                context.waitTicks(20);
+                if(mode.equals("wide"))context.runOnClient(client->{
+                    var camera=client.gameRenderer.mainCamera();
+                    if(!new WorldSpace(client).framingClear(WorldSpace.point(camera.position()),WorldSpace.point(new Vec3(camera.forwardVector())),
+                            camera.getFov(),(double)client.getWindow().getWidth()/client.getWindow().getHeight()))
+                        throw new AssertionError("Recording contains an empty sky or obstructed scene");
+                });
+            }
             mark(output.resolve(mode+".done"),Long.toString(System.currentTimeMillis()));
         }
     }

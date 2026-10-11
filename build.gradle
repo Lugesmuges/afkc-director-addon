@@ -43,6 +43,7 @@ fabricApi {
     }
 }
 loom.runs.configureEach { vmArg '-XX:ActiveProcessorCount=4' }
+if (project.hasProperty('widecheck')) loom.runs.configureEach { vmArg '-Ddirector.widecheck=true' }
 if (project.hasProperty('showcase')) {
     loom.runs.configureEach {
         vmArg "-Ddirector.showcase=${project.property('showcase')}"

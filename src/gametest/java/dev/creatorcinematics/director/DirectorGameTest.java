@@ -72,6 +72,7 @@ public final class DirectorGameTest implements FabricClientGameTest {
         check(context.computeOnClient(client->xAxis?client.player.getX():client.player.getZ())<0.8,"Player did not walk along the corridor leg");
     }
     @Override public void runTest(ClientGameTestContext context) {
+        if(Boolean.getBoolean("director.widecheck")){WideScene.diagnose(context);return;}
         if(System.getProperty("director.showcase")!=null){new ShowcaseGameTest().runTest(context);return;}
         var regressions=new java.util.ArrayList<String>();
         context.setScreen(()->new DirectorScreen(null));
@@ -336,6 +337,31 @@ public final class DirectorGameTest implements FabricClientGameTest {
             context.takeScreenshot("director-corridor-corner");
             context.runOnClient(client->AfkCinematicsClient.markInputActivity());
             context.waitTicks(12);
+            WideScene.setup(context,server);
+            int wideOriginalFov=context.computeOnClient(client->client.options.fov().get());
+            context.runOnClient(client->requestStart());context.waitTicks(30);
+            WideShot wide=context.computeOnClient(WideScene::choose);
+            Point wideStart=context.computeOnClient(client->WorldSpace.point(CinematicCameraRig.getInterpolatedPosition(1)));
+            check(wideStart.distance(context.computeOnClient(client->WorldSpace.point(client.player.getEyePosition())))>16,"Wide shot stayed in old close radius");
+            for(int i=0;i<140;i++){
+                context.waitTick();context.runOnClient(client->{
+                    double aspect=(double)client.getWindow().getWidth()/client.getWindow().getHeight();
+                    check(wide.fits(WorldSpace.point(CinematicCameraRig.getInterpolatedPosition(1)),aspect),"Large project was cropped during movement");
+                    check(client.options.fov().get()==wide.fov(),"Establishing lens changed during movement");
+                });
+            }
+            context.runOnClient(client->{
+                check(wideStart.distance(WorldSpace.point(CinematicCameraRig.getInterpolatedPosition(1)))>.3,"Establishing shot did not travel");
+                check(!CreatorStats.cards().isEmpty(),"Vanilla statistics response never reached the overlay");
+                check(CreatorStats.cards().stream().allMatch(c->c.player().equals(client.player.getName().getString())),"Statistics belong to another player");
+            });
+            context.takeScreenshot("director-large-project-stats");
+            context.runOnClient(client->WideScene.checkRejectedLens(client,wide));
+            context.runOnClient(client->AfkCinematicsClient.markInputActivity());context.waitTicks(12);
+            context.runOnClient(client->{
+                check(client.options.fov().get()==wideOriginalFov,"Wide shot failed to restore game FOV");
+                check(CreatorStats.view(System.nanoTime())==null,"Statistics remained after input");
+            });
             // No admissible camera view: decline cleanly and wait a fresh AFK interval.
             server.runCommand("fill -18 64 -18 -12 72 -12 minecraft:stone");
             server.runCommand("fill -15 65 -15 -15 66 -15 minecraft:air");

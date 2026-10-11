@@ -3,6 +3,7 @@ package dev.creatorcinematics.director.mixin;
 import com.spunkyinsaan.afkcinematics.CinematicCameraRig;
 import dev.creatorcinematics.director.*;
 import net.minecraft.client.*;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.sounds.Music;
 import org.spongepowered.asm.mixin.*;
@@ -36,7 +37,7 @@ public abstract class ClientMixin {
         ci.cancel();
     }
     @Inject(method="markInputActivity",at=@At("HEAD"))
-    private static void afkcd$input(CallbackInfo ci){DirectorClient.input();}
+    private static void afkcd$input(CallbackInfo ci){DirectorClient.input();CreatorStats.stop();}
     @Inject(method="startCinematic",at=@At("HEAD"),cancellable=true)
     private void afkcd$yieldCamera(Minecraft client,String reason,CallbackInfo ci) {
         if(DirectorClient.foreignCamera(client)) ci.cancel();
@@ -55,7 +56,12 @@ public abstract class ClientMixin {
             return;
         }
         DirectorClient.cinematicStarted(client);
+        CreatorStats.started(client);
     }
+    @Inject(method="stopCinematic",at=@At("HEAD"))
+    private void afkcd$stopStats(Minecraft client,boolean ui,boolean movement,boolean input,double distance,CallbackInfo ci){CreatorStats.stop();}
+    @Inject(method="renderOverlay",at=@At("TAIL"))
+    private void afkcd$statsOverlay(GuiGraphicsExtractor graphics,DeltaTracker delta,CallbackInfo ci){CreatorStats.render(graphics);}
     @Inject(method="onClientTick",at=@At("HEAD"))
     private void afkcd$interrupt(Minecraft client,CallbackInfo ci) {
         boolean worldChanged=client.level!=afkcd$world;
@@ -67,5 +73,6 @@ public abstract class ClientMixin {
             suppressActivityTicks=0;
             forceStartRequested=false;
         }
+        CreatorStats.tick(client);
     }
 }
