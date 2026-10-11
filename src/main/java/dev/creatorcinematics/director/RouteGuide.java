@@ -2,7 +2,7 @@ package dev.creatorcinematics.director;
 
 import java.util.List;
 
-/** Moving targets only; native AFKC owns interpolation, rotation and duration. */
+/** Moving targets only; native AFKC owns interpolation and rotation. */
 public final class RouteGuide {
     private final List<Point> points;
     private final double[] distances;
@@ -36,7 +36,7 @@ public final class RouteGuide {
         if(best>0.8)return null;
         progress=Math.max(progress,nearest);
         Point target=null;
-        for(double lead=0.9;lead>=0.056;lead*=0.5){
+        for(double lead=0.35;lead>=0.021;lead*=0.5){
             Point candidate=at(progress+lead);
             if(candidate.distance(eye)<=radius && space.clear(camera,candidate)){target=candidate;break;}
         }

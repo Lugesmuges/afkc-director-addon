@@ -1,41 +1,42 @@
-# Prüfprotokoll — 0.1.0-alpha.5
+# Prüfprotokoll — 0.1.0-alpha.6
 
-Stand: 11.10.2026. Minecraft 26.3, Java 25, Fabric Loader 0.19.5, Fabric API 0.162.0+26.3, AFK Cinematics 1.0.6+26.3. Historie: [Alpha.4](verification-alpha4.md).
+Stand: 11.10.2026. Minecraft 26.3, Java 25, Fabric Loader 0.19.5, Fabric API 0.162.0+26.3, AFK Cinematics 1.0.6+26.3. Historie: [Alpha.5](verification-alpha5.md).
 
 ## Ergebnis
 
-`build runClientGameTest -Pcompat`: **BUILD SUCCESSFUL**, Exitcode **0**, abgeschlossen am **11.10.2026 um 07:45 Uhr Europe/Berlin**. Log: `.local/alpha5-final-validation.log`. **71 Unit-Tests ohne Fehler und vollständiger Client-GameTest bestanden.** Das geprüfte Bild zeigt die komplette 48 Blöcke breite Demo-Anlage mit echter Statistik-Karte.
+`build runClientGameTest -Pcompat`: **BUILD SUCCESSFUL**, Exitcode **0**, abgeschlossen am **11.10.2026 um 08:33 Uhr Europe/Berlin**. Log: `.local/alpha6-final-validation.log`. **80 Unit-Tests ohne Fehler und vollständiger Client-GameTest bestanden.**
 
-## Änderungen und Fehlernachweise
+## Änderungen und Nachweise
 
-Totalen berechnen Abstand und Bildwinkel aus allen acht Ecken des gemerkten Projekts, mit Platz für schwarze Balken und die gesamte Kamerabewegung. Separater Maximalradius standardmäßig 96 Blöcke; Details bleiben bei 16. Die effektive Server-Sichtweite begrenzt zusätzlich den Abstand zwischen Kamera und Bauwerk. Der Bildwinkel bleibt pro Einstellung konstant, bei Bedarf bis 70 Grad.
+- Normale Bewegungen dauern 18–26 Sekunden und umfassen zehn Richtungsvarianten. Die Weglänge bleibt begrenzt, sodass die Kamerageschwindigkeit sinkt. Die Tests für weiterlaufende Bewegung nach 14 Sekunden sowie abwärts/diagonale Fahrt schlugen zuvor fehl (`alpha6-motion-red.log`).
+- Spieleransichten wechseln bevorzugt zwischen Vorderseite, Seiten und Rückseite. Eine optionale Fensteransicht verwendet besuchte Innenräume und erneut geprüfte Zugänge. `WindowScene` bestätigt im echten Client die Sicht durch Glas, weiterhin physische Glaskollision, erreichbaren Innenraum, bewegte Fensteraufnahme sowie Ablehnung eines nachträglich geschlossenen Eingangs und getönten Glases.
+- Gangfahrten dauern jetzt 18 Sekunden mit kleinerem Vorlauf statt schneller Bewegung. Der Geschwindigkeitsfall schlug zuvor fehl (`alpha6-corridor-red.log`); der vollständige Clienttest prüft beide Schenkel des Gangs ohne Dach-/Wandclip.
+- Schnitte warten auf vollständige Schwarzdeckung: 0,6 Sekunden Abblende, eine Sekunde Aufblende, auf Renderzeit interpoliert. Ein eigener zuerst fehlgeschlagener Test schützt vor Aufblitzen bei schnellen Wiederholungsversuchen (`alpha6-transition-retry-red.log`). `TransitionScene` bestätigt den echten normalen Einstellungswechsel und den Originalaufruf nach passiver Positionskorrektur: keine vorzeitige Kameraversetzung, volle Deckung beim Wechsel und anschließende Freigabe des Bilds.
+- Unabhängige Codeprüfung fand den zuerst ungeprüften passiven Refresh und das feste 16:9-Seitenverhältnis bei Spieleraufnahmen. Beide wurden korrigiert; die Nachprüfung meldete keine weiteren wichtigen Befunde.
+- Statistik-Karten sind um 28 % kleiner und unabhängig von der Spielsprache deutsch. Sichtkontrolle der Großprojekt-Aufnahme bestätigt die kompakte Karte.
 
-Der erste Clientlauf bestand die Positionsprüfungen, zeigte aber im Bild nur Blau. Drei zusätzliche Messungen bestätigten die korrekte tatsächliche Render-Kameraposition und Blickrichtung. Ursache: fünf Chunks Server-Sichtweite ergeben vollständigen Nebel bei 80 Blöcken; die nächste Gebäudefläche lag über 88 Blöcke entfernt. Belege: `.local/alpha5-integration.log`, `.local/alpha5-wide-render-diagnostic.log`. Der Sichtweiten-Regressionstest scheiterte zuerst (`alpha5-fog-red.log`). Eine zusätzliche Ansicht auf Gebäude-Mittelhöhe erlaubt die vollständige Totale auch bei knapper Sichtweite und leicht seitlicher Spielerposition. Reine Himmelsbilder ohne reale Szene im inneren Bild werden als Ersatzaufnahme verworfen.
+Der erste Clientlauf scheiterte an einem veralteten Testablauf: Der Linsen-Test wählte nun den neuen, gültigen Spieler-Schnitt und erwartete trotzdem die alte Linse. Der Test verwendet wieder einen tatsächlich verworfenen Folgeschnitt. Die bisherige Dauererwartung wurde an die ausdrücklich gewünschten längeren Einstellungen angepasst. Der endgültige vollständige Lauf enthält weiterhin die Linsenprüfung bei verworfenem Schnitt.
 
-Der Clienttest reproduzierte außerdem den vorzeitigen Linsenwechsel bei verworfenem Folgeschnitt: `Rejected cut changed the held wide lens from 55 to 30` (`alpha5-lens-red.log`). Die zuletzt akzeptierte Linse bleibt jetzt bis zum nächsten angenommenen Schnitt erhalten.
+## Prüfumfang und Grenzen
 
-Die unabhängige Codeprüfung fand zwei Statistikfehler: widersprüchliche UUIDs konnten wegen Namensgleichheit passieren, und ein HTTP-Timeout beendete nur das Future statt einer hängenden Übertragung. Drei neue Regressionen scheiterten zuerst und bestehen nach UUID-Priorisierung und aktiver Subscription-/Transport-Cancellation. Die Text-Alpha-Verarbeitung wurde gegen Minecraft 26.3 geprüft; kleine Alphawerte bleiben erhalten.
-
-## Prüfumfang
-
-71 Unit-Tests einschließlich bisheriger Fälle sowie vollständiges Framing und Bewegung, effektive Sichtweite, seitliche Spielerposition, gesperrte Wege, Himmelsablehnung, Statistik-Einheiten, fehlende/veraltete Websitewerte, UUID-Zuordnung, Weltwechsel, Abrufgrenzen, Streaming-Limit, Übertragungsabbruch und Karten-Timing/Fades.
-
-Der vollständige Clientlauf prüft Survival-Platzierung mit Blockverbrauch, lokale Befehle ohne Rechte, Start/Eingabeabbruch, stille Original-Mod, ausgeblendete Credits, echte Freecam-Übergabe, fremde Kamera, FOV/HUD-Rückkehr, Dimensionswechsel/Persistenz, Haus/Regen/Gang und abgelehnten Start im geschlossenen Raum. Neu: 140 Ticks einer Großprojekt-Totale, fester Bildwinkel, ganze Gebäudegrenze im Frame, reale Minecraft-Statistikantwort, Entfernen der Anzeige nach Eingabe und Linse bei verworfenem Folgeschnitt.
-
-## Kompatibilität und Grenzen
+Alle bisherigen Speicher-, Statistik-, HTTP-, Framing- und Kompatibilitätstests bleiben enthalten. Survival-Platzierung mit Blockverbrauch, Befehle ohne Adminrechte, Original-AFK-Start/Eingabeabbruch, unterdrückte AFKC-Musik, ausgeblendete Credits, Freecam-Übergabe, FOV/HUD-Rückkehr, Dimensionswechsel/Persistenz, Haus/Regen/Gang, komplette große Anlage innerhalb der effektiven Server-Sichtweite und Ablehnung eines Starts im versiegelten Raum bestanden.
 
 Gemeinsam geladen: Sodium 0.9.2+mc26.3, Iris 1.11.7+mc26.3, Entity Culling 1.11.3, Mod Menu 21.0.0, Freecam 1.5.0-alpha.2, Zoomify 2.17.0+mc26.3, Do a Barrel Roll 3.8.5 und Flashback 0.43.6 mit Bibliotheken. [Modinventar](compatibility-lock.json), [gesamter Mitschnitt](compatibility.md).
 
-Iris ohne aktives Shaderpack. Kein CraftAttack-, vollständiger Creator-Pack- oder Anti-Cheat-Test; keine FPS-Garantie. Die große Fixture legt eine synthetische Anlage und reproduzierbare Bau-Erinnerungen an. Sie belegt Kameraframing, keine automatische Rekonstruktion unbekannter Gebäude. Ein Test an der tatsächlichen Ölplattform mit Shader und Server bleibt nötig.
+Iris ohne aktives Shaderpack. Kein Test auf CraftAttack, mit dem vollständigen Creator-Pack oder einem Anti-Cheat. Fensteransichten brauchen eine geeignete Geometrie und passende Laufpunkte während der aktuellen Weltverbindung. Die begrenzte Suche kann nicht jeden komplexen Gebäudezugang finden. FPS hängen weiterhin von Welt, Shader und Hardware ab.
 
-Entwicklungs-Refmap-, Windows-Performancecounter- und Realms-Testkonto-Warnungen bleiben vorhanden. Ein einzelner Windows-Zugriffsfehler beim Ersetzen einer Erinnerungsdatei trat auf; spätere Speicher-/Dimensionswechselprüfungen bestanden. Das Add-on behält ungespeicherte Daten für einen späteren Schreibversuch. Grün bedeutet kein warnungsfreies Log.
+Entwicklungs-Refmap-, Windows-Performancecounter- und Realms-Testkonto-Warnungen bleiben vorhanden. Der einmalige große Testweltaufbau verursachte eine Überlastungsmeldung des integrierten Servers. Grün bedeutet kein warnungsfreies Log.
 
 Original-JAR, Minecraft-Klassen, Testwelt und Testklassen werden nicht mitverteilt.
 
-## Ausgelieferte Alpha.5
+Die erste neue Videoaufnahme zeigte eine angeschnittene Spielerfigur am Rand. Ein zusätzlicher Regressionstest scheiterte zuerst (alpha6-actor-edge-red.log). Die Prüfung berücksichtigt den eigenen Spieler nun auch jenseits von vier Blöcken und reagiert bereits bei zwei Prozent sichtbar angeschnittener Bildfläche. Vollständige Figuren bleiben erlaubt. Der neue echte Clientfall bei sechs Blöcken und der vollständige Folgelauf bestanden; unabhängige Nachprüfung ohne wichtige Befunde.
 
-`dist/afkc-director-addon-0.1.0-alpha.5.jar` — 101.678 Bytes, 61 Archiveinträge. SHA-256: `96b1a21dcd35a264c840603b04f7985863e61b6d51f970f2b7a101340554e3d2`.
+## Ausgelieferte Alpha.6
 
-Client-only, MIT, exakte AFKC-Abhängigkeit. Keine Original-/Minecraft-Klassen, Testklassen, Fremd-JARs oder Audioassets im Archiv.
+Die Client-JAR umfasst 109.661 Bytes und 66 Archiveinträge. SHA-256: `4d60287b184e16b30b2c15f9606eecc5d7f0bdcfbeb838c27fd45dcbd47d014b`. Client-only, MIT, exakte AFKC-Abhängigkeit. Keine Original-/Minecraft-Klassen, Testklassen, Fremd-JARs oder Audioassets im Archiv.
 
-Der zusätzliche Aufnahme-Lauf `runClientGameTest -Pcompat -Pshowcase=wide` bestand am 11.10.2026 um 07:49 Uhr. Er prüfte über 53 Sekunden jede Sekunde den tatsächlichen Render-Blick auf vorhandene Szene. Das final geprüfte Video ist ein fortlaufender 48-Sekunden-Ausschnitt mit mehreren Einstellungen: H.264, 1280×720, SAR1:1, 16:9, 30fps-Ausgabe, 1440 Frames, keine Audiospur, vollständig fehlerfrei dekodiert. Die begrenzte Testhardware verursacht einzelne doppelte Aufnahmeframes; es wurden keine Zwischenbilder erzeugt. Sichtkontrolle von Gesamtfolge und zweiter Einstellung: keine vollständige Himmels-/Nebelansicht in diesem Clip.
+Der abschließende Aufnahme-Lauf `runClientGameTest -Pcompat -Pshowcase=after` bestand am 11.10.2026 um 08:37 Uhr. Er bestätigte die automatisch gelernte Fensteransicht nach tatsächlichem Gehen und prüfte während der Aufnahme jede Sekunde die reale Kameraperspektive. Die protokollierte Spiel-Framerate lag bei 58–60 FPS; wiederholte Captureframes bleiben vorhanden.
+
+Finales Video: `04-ruhige-fahrten-fenster-und-uebergaenge.mp4`, ein fortlaufender 70-Sekunden-Ausschnitt ohne Zusatzbeschriftungen, ohne Audiospur und ohne künstliche Zwischenbilder. H.264, 1280×720, 16:9, SAR1:1, 60fps-Ausgabe, 4200 Frames, 22.918.439 Bytes; vollständige Dekodierung ohne Fehler. SHA-256: `f584e2690723a68bbf592e307e1f3030d31899f68f6839875747ca061ff35866`.
+
+Sichtkontrolle: Fensteransicht, Rücken-, Seiten- und Vorderansicht; der störende Randanschnitt der ersten Aufnahme ist in der finalen Folge nicht vorhanden. Drei Ab-/Aufblenden, kurze vollständige Deckung jeweils etwa 0,2–0,25 Sekunden; die übrige Übergangszeit besteht aus der weichen Helligkeitsänderung. Kein Beleg für durchgehend perfekte Bildgestaltung auf beliebigen Servern und Bauwerken.

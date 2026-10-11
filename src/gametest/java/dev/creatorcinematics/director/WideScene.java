@@ -91,7 +91,7 @@ final class WideScene {
             shot=new WideShot(shot.camera(),shot.focus(),shot.min(),shot.max(),55);
             var held=director.getClass().getDeclaredField("afkcd$wide");held.setAccessible(true);held.set(director,shot);
             client.options.fov().set(55);
-            var sequence=director.getClass().getDeclaredField("afkcd$wideSequence");sequence.setAccessible(true);sequence.setInt(director,1);
+            var sequence=director.getClass().getDeclaredField("afkcd$wideSequence");sequence.setAccessible(true);sequence.setInt(director,2);
             var begin=java.util.Arrays.stream(director.getClass().getDeclaredMethods()).filter(m->m.getName().endsWith("afkcd$begin")).findFirst().orElseThrow();begin.setAccessible(true);
             begin.invoke(director,client,new org.spongepowered.asm.mixin.injection.callback.CallbackInfo("chooseNextShot",true));
             var cut=java.util.Arrays.stream(director.getClass().getDeclaredMethods()).filter(m->m.getName().endsWith("afkcd$validateCut")).findFirst().orElseThrow();cut.setAccessible(true);

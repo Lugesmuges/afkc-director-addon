@@ -37,7 +37,7 @@ public abstract class ClientMixin {
         ci.cancel();
     }
     @Inject(method="markInputActivity",at=@At("HEAD"))
-    private static void afkcd$input(CallbackInfo ci){DirectorClient.input();CreatorStats.stop();}
+    private static void afkcd$input(CallbackInfo ci){DirectorClient.input();CreatorStats.stop();DirectorClient.TRANSITION.reset();}
     @Inject(method="startCinematic",at=@At("HEAD"),cancellable=true)
     private void afkcd$yieldCamera(Minecraft client,String reason,CallbackInfo ci) {
         if(DirectorClient.foreignCamera(client)) ci.cancel();
@@ -61,7 +61,7 @@ public abstract class ClientMixin {
     @Inject(method="stopCinematic",at=@At("HEAD"))
     private void afkcd$stopStats(Minecraft client,boolean ui,boolean movement,boolean input,double distance,CallbackInfo ci){CreatorStats.stop();}
     @Inject(method="renderOverlay",at=@At("TAIL"))
-    private void afkcd$statsOverlay(GuiGraphicsExtractor graphics,DeltaTracker delta,CallbackInfo ci){CreatorStats.render(graphics);}
+    private void afkcd$statsOverlay(GuiGraphicsExtractor graphics,DeltaTracker delta,CallbackInfo ci){CreatorStats.render(graphics);TransitionOverlay.render(graphics);}
     @Inject(method="onClientTick",at=@At("HEAD"))
     private void afkcd$interrupt(Minecraft client,CallbackInfo ci) {
         boolean worldChanged=client.level!=afkcd$world;

@@ -24,7 +24,7 @@ public final class FrameQuality {
         // A sliver of open space at one edge cannot rescue a wall covering most of the image.
         return depthRays>=3;
     }
-    /** Reject only a large, visibly cropped foreground figure; whole figures stay allowed. */
+    /** Reject a visibly cropped figure at the edge; whole figures stay allowed. */
     public static boolean croppedActor(Point camera,Point forward,double fov,double aspect,Point min,Point max){
         Point right=new Point(-forward.z(),0,forward.x());
         right=right.length()<0.001?new Point(1,0,0):right.scale(1/right.length());
@@ -42,7 +42,7 @@ public final class FrameQuality {
         if(!inFront)return false;
         double width=Math.max(0,Math.min(1,maxX)-Math.max(-1,minX));
         double height=Math.max(0,Math.min(1,maxY)-Math.max(-1,minY));
-        return width*height/4>0.08 && (minX<-1 || maxX>1 || minY<-1 || maxY>1);
+        return width*height/4>0.02 && (minX<-1 || maxX>1 || minY<-1 || maxY>1);
     }
     private static double dot(Point a,Point b){return a.x()*b.x()+a.y()*b.y()+a.z()*b.z();}
 }

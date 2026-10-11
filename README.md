@@ -1,4 +1,4 @@
-# AFKC Director Add-on — Alpha 0.1.0-alpha.5
+# AFKC Director Add-on — Alpha 0.1.0-alpha.6
 
 Kleine Zusatz-JAR für **AFK Cinematics 1.0.6+26.3** von **spunkyinsaan**. Das Add-on merkt sich Baugebiete, Aufenthalte und wiederkehrende AFK-Plätze und berät die vorhandenen Kamerapresets. Seit Alpha.4 ersetzen langsame Heran-, Heraus-, Seitwärts- und kleine Aufwärtsfahrten das ursprüngliche Pendeln. Ein Motiv bleibt über die gesamte Einstellung fest. AFK Cinematics behält die Interpolation zwischen Renderbildern, AFK-Erkennung, schwarze Balken sowie Ein- und Ausstieg. Die „Made by“-Texteinblendung ist ausgeblendet, die Autorennennung in den Mod-Informationen bleibt erhalten.
 
@@ -6,10 +6,10 @@ Kleine Zusatz-JAR für **AFK Cinematics 1.0.6+26.3** von **spunkyinsaan**. Das A
 
 ## Installation
 
-**[Download der Alpha-JAR und Beispielvideos](https://github.com/Lugesmuges/afkc-director-addon/releases/tag/v0.1.0-alpha.5)** · **[Quellcode / Mitarbeit](https://github.com/Lugesmuges/afkc-director-addon)**
+**[Download der Alpha-JAR und Beispielvideos](https://github.com/Lugesmuges/afkc-director-addon/releases/tag/v0.1.0-alpha.6)** · **[Quellcode / Mitarbeit](https://github.com/Lugesmuges/afkc-director-addon)**
 
 1. Minecraft **26.3**, Java **25**, Fabric Loader **0.19.5+** und Fabric API **0.162.0+26.3 oder neuer für 26.3** verwenden.
-2. `afk-cinematics-1.0.6+26.3.jar` und `afkc-director-addon-0.1.0-alpha.5.jar` in den `mods`-Ordner des Profils legen. Eine ältere Director-Add-on-JAR ersetzen. Keine `-sources.jar` installieren.
+2. `afk-cinematics-1.0.6+26.3.jar` und `afkc-director-addon-0.1.0-alpha.6.jar` in den `mods`-Ordner des Profils legen. Eine ältere Director-Add-on-JAR ersetzen. Keine `-sources.jar` installieren.
 3. Eine Welt oder einen Server betreten und bauen. Erfolgreiche Änderungen werden nach ungefähr einer Sekunde übernommen.
 4. In der Nähe bleiben und `/afkc start` verwenden oder auf den normalen AFK-Start warten. Eingabe beendet die Aufnahme wie im Original.
 5. Einstellungen über **Mod Menu → AFKC Director Add-on** oder `/afkdirector settings`. AFK-Zeit und Balken werden weiterhin in AFK Cinematics eingestellt. Die neuen ruhigen Fahrten sind bei aktiviertem Add-on automatisch aktiv; die ursprüngliche Shake-Stärke beeinflusst sie nicht.
@@ -24,7 +24,7 @@ Nur auf dem Client installieren. Kein Server-Plugin, keine eigenen Netzwerkpaket
 - Aktuelle Aktivität verliert stufenlos Gewicht (Startwert: zehn Minuten Halbwertszeit, keine 30-Minuten-Abschneidegrenze). Bauprojekte bleiben separat gespeichert. Wiederholte AFK-Besuche zählen über Sessions hinweg; eine einzelne lange Abwesenheit zählt nicht als viele Besuche. Die Startwerte sind begründete Heuristiken: [Recherche und Schwellenwerte](docs/activity-research.md).
 - Benachbarte Bauzellen werden zu größeren Projekten zusammengefasst. So bleibt ein über Stunden gebautes Haus ein Motiv; die Auswahl reduziert sich nicht auf die letzten Blöcke.
 - Der Bildausschnitt wechselt zwischen dem zusammengefassten Projekt, einzelnen Bereichen und Umgebung. Original-Presets liefern unterschiedliche Ausgangspositionen und Höhen. Wenn möglich, wird der zuletzt benutzte Winkel vermieden. Auch gelegentliche Figurenaufnahmen erhalten die ruhige Bewegung.
-- Normale Einstellungen dauern 10–14 Sekunden. Die Kamera fährt in einer durchgehenden Richtung mit sanftem Anfahren und Abbremsen; ihr Blick bleibt am gewählten Motiv. Heran- und Herausfahrten erzeugen einen Zoom-Eindruck mit räumlicher Tiefenwirkung, ohne den FOV pro Shot zu verändern. Kein künstliches Zittern, kein seitliches oder vertikales Pendeln.
+- Normale Einstellungen dauern 18–26 Sekunden. Die Kamera fährt in einer durchgehenden Richtung mit sanftem Anfahren und Abbremsen; ihr Blick bleibt am gewählten Motiv. Heran- und Herausfahrten erzeugen einen Zoom-Eindruck mit räumlicher Tiefenwirkung, ohne den FOV pro Shot zu verändern. Kein künstliches Zittern, kein seitliches oder vertikales Pendeln.
 - Jede kurze Fahrt wird vor dem Schnitt auf freien Weg, Sicht und Kameraradius geprüft und während der Bewegung erneut abgesichert. Bei zu wenig Platz bleibt ein akzeptiertes Bild ruhig stehen. Neue Hindernisse beenden die Fahrt; die Kamera versucht nicht, sich mitten im Shot durch seitliche Korrekturen zu retten.
 - Sitzen oder ein geschützter Standort bei Regen kann die zuletzt gewählte Blickrichtung als zusätzliches Motiv in die Folge aufnehmen. Es gibt keinen eigenen starren Cozy-Kameramodus; Blickwinkel und Fahrtrichtung wechseln zwischen den Einstellungen.
 - Das Add-on schlägt nur nahe, freie Standpunkte vor. Es prüft geladene Geometrie, Weg zum Standpunkt und Sicht aufs Motiv. Reine Himmelsbilder ohne Landschaft oder Bauwerk im inneren Bildbereich werden als Ersatzaufnahme verworfen. Jeder native Schnitt und die tatsächliche Blickrichtung werden zusätzlich auf nahe Hindernisse und sichtbare Figuren vor der Linse geprüft. Ein kleiner freier Spalt am Bildrand reicht nicht, wenn der Rest eine nahe Wand zeigt. Angepasste Bewegungen werden räumlich abgesichert. Bei ungeeigneter Sicht bleibt zunächst das letzte angenommene Bild stehen, während eine neue Aufnahme gesucht wird. Gibt es bereits zum Start keinen brauchbaren Standpunkt, bleibt die Spielansicht erhalten und ein neuer Versuch wartet die eingestellte AFK-Zeit ab.
@@ -34,7 +34,11 @@ Nur auf dem Client installieren. Kein Server-Plugin, keine eigenen Netzwerkpaket
 
 ## Cinematische Statistik-Karten
 
-Ab sechs Sekunden Cinematic erscheint unten links jeweils ein echter Wert: etwa Spielzeit, gelaufene Strecke oder abgebaute Blöcke. Die Karte gleitet leicht ein und blendet weich ein/aus; es gibt keinen Ton. Eingabe und Kamerawechsel beenden die Anzeige. Über Mod Menu können Karten vollständig ausgeschaltet werden.
+Ab sechs Sekunden Cinematic erscheint unten links jeweils ein echter Wert: etwa Spielzeit, gelaufene Strecke oder abgebaute Blöcke. Die Karte gleitet leicht ein und blendet weich ein/aus; es gibt keinen Ton. Eingabe und die Übergabe an eine andere Kamera-Mod beenden die Anzeige. Über Mod Menu können Karten vollständig ausgeschaltet werden.
+
+Ab Alpha.6 sind die Karten um 28 % kleiner und immer deutsch beschriftet, auch bei englischer Spielsprache. Normale Fahrten dauern 18–26 Sekunden, geführte Gangfahrten 18 Sekunden. Auf- und Abwärtsfahrten sowie vier diagonale Varianten ergänzen Heran-, Heraus- und Seitenfahrten. Pro Einstellung bleibt der Blickpunkt fest. Zwischen Einstellungen liegt eine kurze Abblende (0,6 s) und sanfte Aufblende (1 s); das gilt auch nach passiven Server-Positionskorrekturen. Es wird keine zweite Szene für einen Crossfade gerendert.
+
+Spieleraufnahmen wechseln bevorzugt zwischen Vorderseite, Seite und Rückseite. Gelegentlich sucht das Add-on eine Fensteransicht aus einem zuvor besuchten Innenraum. Klare und gefärbte Glasscheiben lassen den Blick durch, bleiben für die Kamera aber Hindernisse; getöntes Glas bleibt undurchsichtig. Ein aktuell freier Zugang über höchstens einen besuchten Wegpunkt muss nachweisbar sein. Ohne passenden Innenraum, Laufweg oder Fenster bleibt eine andere geprüfte Perspektive zuständig. Die Laufwegpunkte bestehen nur während der aktuellen Weltverbindung; Bau-Erinnerungen bleiben weiterhin über Sessions erhalten.
 
 Minecraft liefert die normalen Statistiken des angemeldeten Spielers für die aktuelle Welt bzw. den Server. Dafür genügt die normale Statistikabfrage, wie im Minecraft-Statistikbildschirm; keine Adminrechte. Auf CastCrafters Client sind es seine Werte, auf einem anderen Client dessen eigene. Spielername und Quelle stehen auf jeder Karte.
 

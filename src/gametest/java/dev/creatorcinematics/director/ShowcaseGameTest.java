@@ -88,6 +88,25 @@ public final class ShowcaseGameTest implements FabricClientGameTest {
             }
             command(server,"tp @a 2.5 66 0.5 -90 -8");
             if(mode.equals("wide"))WideScene.setup(context,server);
+            if(mode.equals("after")){
+                // A real walk out through the open door supplies interior history naturally.
+                command(server,"tp @a 11.5 66 0.5 90 0");context.waitTicks(8);
+                context.runOnClient(client->client.options.keyUp.setDown(true));
+                try{
+                    for(int i=0;i<65;i++){
+                        if(context.computeOnClient(client->client.player.getX())<=2.5)break;
+                        context.waitTick();
+                    }
+                }finally{context.runOnClient(client->client.options.keyUp.setDown(false));}
+                context.waitTicks(8);
+                context.runOnClient(client->{
+                    client.player.setYRot(-90);client.player.setXRot(0);
+                    var shot=DirectorClient.characterShot(client,0);
+                    if(shot==null || !new WorldSpace(client).windowView(shot.camera(),shot.focus()))
+                        throw new AssertionError("Recorded house walk did not produce a usable window view");
+                    DirectorClient.LOG.info("SHOWCASE WINDOW {}",shot);
+                });
+            }
             // Start at the capture size; live test-window resizing can leave the native blit cropped.
             context.runOnClient(client->{
                 client.options.pauseOnLostFocus=false;
@@ -107,13 +126,14 @@ public final class ShowcaseGameTest implements FabricClientGameTest {
             context.runOnClient(client->client.getConnection().sendCommand("afkc start"));
             mark(output.resolve(mode+".started"),Long.toString(System.currentTimeMillis()));
             context.waitTicks(40);
-            for(int i=0;i<53;i++){
+            for(int i=0;i<(mode.equals("after")?78:53);i++){
                 context.waitTicks(20);
-                if(mode.equals("wide"))context.runOnClient(client->{
+                if(i%10==0)context.runOnClient(client->DirectorClient.LOG.info("SHOWCASE FPS {}",client.getFps()));
+                if(mode.equals("wide") || mode.equals("after"))context.runOnClient(client->{
                     var camera=client.gameRenderer.mainCamera();
                     if(!new WorldSpace(client).framingClear(WorldSpace.point(camera.position()),WorldSpace.point(new Vec3(camera.forwardVector())),
                             camera.getFov(),(double)client.getWindow().getWidth()/client.getWindow().getHeight()))
-                        throw new AssertionError("Recording contains an empty sky or obstructed scene");
+                        throw new AssertionError("Recording contains an empty sky, obstructed scene or cropped foreground actor");
                 });
             }
             mark(output.resolve(mode+".done"),Long.toString(System.currentTimeMillis()));

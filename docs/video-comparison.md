@@ -31,3 +31,9 @@ Das Add-on soll passendere Motive liefern. Die Clips belegen keine zuverlässige
 Zusätzliche Aufnahme: `03-totalen-und-statistiken.mp4`. Echte 1280 × 720-Fensteraufnahme, ohne Ton, mit dem vorbereiteten Kompatibilitäts-Modsatz und ohne Shader. Die separate 48 Blöcke breite synthetische Anlage wird durch `WideScene` aufgebaut. Die Fixture trägt dafür reproduzierbare frühere Bauaktivität in den Test-Speicher ein. Das ist ein Kameratest; es zeigt keine live über Stunden gelernte Ölplattform und keine CraftAttack-Aufnahme. Die Statistik-Karten stammen aus den tatsächlichen Werten des Testspielers Player0.
 
 Mehrere reguläre Schnitte bleiben in einer fortlaufenden Aufnahme. Die Fixture prüft jede Sekunde die tatsächliche Render-Blickrichtung auf reale Szene; die Bildkontrolle ergänzt diese geometrische Prüfung. Die endgültige Video-Schnittstelle ist kein Beleg für beliebige Server, Shader oder uneingeschränkt gute Motive. Das ursprüngliche Alpha.4-Vorher/Nachher-Paar bleibt unter dem älteren Release erhalten.
+
+## Alpha.6: Fensterfahrt und weiche Einstellungswechsel
+
+Die neue Aufnahme entsteht mit derselben kompakten Werkstatt und demselben Kompatibilitäts-Modsatz. Zusätzlich läuft der Testspieler vor dem AFK-Start tatsächlich aus dem Haus durch den offenen Eingang. Das Add-on beobachtet diesen normalen Weg automatisch und findet damit eine Innenperspektive durch das Fenster. Kein manuelles `remember`, keine erzwungene Kameraposition und keine vorbereitete Laufweg-Erinnerung.
+
+Die Aufnahme enthält keine nachträglich eingeblendeten Testbeschriftungen. Die kleinere deutsche Statistik-Karte stammt direkt aus dem Add-on. Die Schwarzblenden zwischen Einstellungen werden ebenfalls live im Spiel erzeugt. Ausschließlich Minecraft-Fenster, 1280 × 720; die Ausgabe wird mit 60 Bildern pro Sekunde aufgezeichnet. Wiederholte Captureframes sind möglich, künstliche Zwischenbilder werden nicht ergänzt.

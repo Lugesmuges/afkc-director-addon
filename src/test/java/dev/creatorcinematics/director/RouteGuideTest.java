@@ -5,6 +5,17 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RouteGuideTest {
+    @Test void narrowInteriorTravelDoesNotRushAheadOfTheNativeRotation(){
+        var guide=new RouteGuide(List.of(new Point(0,65,0),new Point(4,65,0)));
+        Point camera=guide.start();
+        for(int tick=0;tick<80;tick++){
+            var hint=guide.next(camera,guide.start(),16,OPEN);
+            Point next=camera.lerp(hint.camera(),.07);
+            assertTrue(next.distance(camera)<=.028,"A corridor must not rush past its details");
+            camera=next;
+        }
+        assertTrue(camera.x()>.8);
+    }
     @Test void openGalleryKeepsTheGazeDownTheHallInsteadOfOntoTheOppositeWall() {
         var guide=new RouteGuide(List.of(new Point(0,65,0),new Point(0,65,1),new Point(2,65,1)));
         var hint=guide.next(guide.start(),guide.start(),16,OPEN);
@@ -45,7 +56,7 @@ class RouteGuideTest {
     @Test void nativeInterpolationCanFollowBothLegsWithoutCuttingTheCorner() {
         var guide=new RouteGuide(List.of(new Point(0,65,0),new Point(2,65,0),new Point(2,65,2)));
         Point camera=guide.start(),eye=camera;
-        for(int tick=0;tick<115;tick++) {
+        for(int tick=0;tick<300;tick++) {
             var hint=guide.next(camera,eye,16,CORRIDOR);
             assertNotNull(hint,"Guide should remain usable at tick "+tick);
             Point next=camera.lerp(hint.camera(),0.07); // native environment-preset blend

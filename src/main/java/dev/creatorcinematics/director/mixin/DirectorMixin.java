@@ -31,34 +31,49 @@ public abstract class DirectorMixin {
     @Unique private WideShot afkcd$wide;
     @Unique private WideShot afkcd$heldWide;
     @Unique private int afkcd$wideSequence;
+    @Unique private boolean afkcd$hasShot;
 
     @Inject(method="chooseNextShot",at=@At("HEAD"),cancellable=true)
     private void afkcd$begin(Minecraft client,CallbackInfo ci){
+        if(DirectorClient.CONFIG.enabled && afkcd$hasShot && shotTicksRemaining<=0
+                && !DirectorClient.TRANSITION.ready(System.nanoTime())){
+            afkcd$holdFrame();ci.cancel();return;
+        }
         afkcd$advised=false;afkcd$previous=null;afkcd$route=null;afkcd$move=null;afkcd$rejected=false;
         if(afkcd$wide!=null){afkcd$heldWide=afkcd$wide;afkcd$wide=null;}
         int sequence=afkcd$wideSequence++;
-        if(sequence%3!=0 || client.player==null)return;
-        afkcd$wide=DirectorClient.wideShot(client,WorldSpace.point(cameraPosition),sequence/3);
-        if(afkcd$wide==null)return;
-        cameraPosition=shotBaseCamera=WorldSpace.vec(afkcd$wide.camera());
-        focusPosition=shotBaseFocus=WorldSpace.vec(afkcd$wide.focus());
+        if(client.player==null)return;
+        ShotAdvisor.Advice custom=null;
+        if(sequence%3==0){
+            afkcd$wide=DirectorClient.wideShot(client,WorldSpace.point(cameraPosition),sequence/3);
+            if(afkcd$wide!=null)custom=new ShotAdvisor.Advice(afkcd$wide.camera(),afkcd$wide.focus());
+        }else if(sequence%3==1)custom=DirectorClient.characterShot(client,sequence/3);
+        if(custom==null)return;
+        cameraPosition=shotBaseCamera=WorldSpace.vec(custom.camera());
+        focusPosition=shotBaseFocus=WorldSpace.vec(custom.focus());
         Vec3 look=focusPosition.subtract(cameraPosition);
         cameraYaw=(float)Math.toDegrees(Math.atan2(look.z,look.x))-90;
         cameraPitch=(float)-Math.toDegrees(Math.atan2(look.y,Math.hypot(look.x,look.z)));
-        client.options.fov().set(afkcd$wide.fov());
+        int fov=afkcd$wide==null?30:afkcd$wide.fov();
+        client.options.fov().set(fov);
         afkcd$heldWide=null;
         double aspect=(double)client.getWindow().getWidth()/Math.max(1,client.getWindow().getHeight());
-        afkcd$move=CinematicMove.plan(afkcd$wide.camera(),afkcd$wide.focus(),WorldSpace.point(client.player.getEyePosition()),
-                DirectorClient.CONFIG.wideRadius,afkcd$moveSequence++,afkcd$wide.space(new WorldSpace(client),aspect),afkcd$wide.fov(),aspect);
+        afkcd$move=CinematicMove.plan(custom.camera(),custom.focus(),WorldSpace.point(client.player.getEyePosition()),
+                afkcd$wide==null?DirectorClient.CONFIG.radius:DirectorClient.CONFIG.wideRadius,afkcd$moveSequence++,
+                afkcd$wide==null?new WorldSpace(client):afkcd$wide.space(new WorldSpace(client),aspect),fov,aspect);
         shotElapsedTicks=0;shotTicksRemaining=currentShotDurationTicks=afkcd$move.durationTicks();
-        afkcd$previous=afkcd$lastShown=afkcd$wide.camera();afkcd$retry.accepted();
-        CinematicCameraRig.cutTo(cameraPosition,cameraYaw,cameraPitch);ci.cancel();
+        afkcd$previous=afkcd$lastShown=custom.camera();afkcd$retry.accepted();afkcd$hasShot=true;
+        CinematicCameraRig.cutTo(cameraPosition,cameraYaw,cameraPitch);
+        DirectorClient.TRANSITION.complete(System.nanoTime());ci.cancel();
     }
     @ModifyArg(method="tick",at=@At(value="INVOKE",target="Lcom/spunkyinsaan/afkcinematics/CinematicDirector;easeFov(Lnet/minecraft/client/Minecraft;FF)V"),index=1)
     private float afkcd$wideLens(float original){return afkcd$wide!=null?afkcd$wide.fov():afkcd$heldWide!=null?afkcd$heldWide.fov():original;}
-    @Inject(method="refreshAfterPassiveMovement",at=@At("HEAD"))
+    @Inject(method="refreshAfterPassiveMovement",at=@At("HEAD"),cancellable=true)
     private void afkcd$resetWideAfterMovement(Minecraft client,CallbackInfo ci){
-        if(afkcd$wide!=null){afkcd$heldWide=afkcd$wide;afkcd$wide=null;afkcd$move=null;}
+        if(!DirectorClient.CONFIG.enabled)return;
+        // AFKC otherwise cuts twice immediately on server position corrections.
+        // Finish the current shot and let the regular covered-cut path relocate the camera.
+        afkcd$rejected=true;shotTicksRemaining=0;afkcd$holdFrame();ci.cancel();
     }
 
     @Inject(method="configureShot",at=@At("TAIL"))
@@ -115,12 +130,14 @@ public abstract class DirectorMixin {
                     && space.clear(WorldSpace.point(client.player.getEyePosition()),WorldSpace.point(position))
                     && space.visible(WorldSpace.point(position),WorldSpace.point(focusPosition));
             if(!reachable || !afkcd$goodFrame(position,yaw,pitch,afkcd$heldWide==null?client.options.fov().get():30)){
-                afkcd$rejected=true;shotTicksRemaining=afkcd$retry.rejectedDelay();afkcd$holdFrame();return;
+                afkcd$rejected=true;shotTicksRemaining=afkcd$retry.rejectedDelay();afkcd$holdFrame();
+                DirectorClient.TRANSITION.complete(System.nanoTime());return;
             }
         }
         afkcd$retry.accepted();
         if(afkcd$heldWide!=null){client.options.fov().set(30);afkcd$heldWide=null;}
         afkcd$lastShown=WorldSpace.point(position);
+        if(DirectorClient.CONFIG.enabled && afkcd$route!=null)shotTicksRemaining=currentShotDurationTicks=360;
         if(DirectorClient.CONFIG.enabled && afkcd$route==null && client.player!=null){
             double aspect=(double)client.getWindow().getWidth()/Math.max(1,client.getWindow().getHeight());
             afkcd$move=CinematicMove.plan(WorldSpace.point(position),WorldSpace.point(focusPosition),
@@ -129,6 +146,7 @@ public abstract class DirectorMixin {
             shotTicksRemaining=currentShotDurationTicks=afkcd$move.durationTicks();
         }
         CinematicCameraRig.cutTo(position,yaw,pitch);
+        afkcd$hasShot=true;DirectorClient.TRANSITION.complete(System.nanoTime());
     }
     @Redirect(method="start",at=@At(value="INVOKE",target="Lcom/spunkyinsaan/afkcinematics/CinematicCameraRig;activate(Lnet/minecraft/world/phys/Vec3;FF)V"))
     private void afkcd$safeInitialView(Vec3 position,float yaw,float pitch){
@@ -234,5 +252,5 @@ public abstract class DirectorMixin {
         CinematicCameraRig.update(position,yaw,pitch);
     }
     @Inject(method="stop",at=@At("TAIL"))
-    private void afkcd$reset(Minecraft client,CallbackInfo ci){afkcd$advised=false;afkcd$previous=null;afkcd$route=null;afkcd$move=null;afkcd$wide=null;afkcd$heldWide=null;afkcd$lastShown=null;afkcd$rejected=false;afkcd$retry.accepted();}
+    private void afkcd$reset(Minecraft client,CallbackInfo ci){afkcd$advised=false;afkcd$previous=null;afkcd$route=null;afkcd$move=null;afkcd$wide=null;afkcd$heldWide=null;afkcd$lastShown=null;afkcd$rejected=false;afkcd$retry.accepted();afkcd$hasShot=false;DirectorClient.TRANSITION.reset();}
 }

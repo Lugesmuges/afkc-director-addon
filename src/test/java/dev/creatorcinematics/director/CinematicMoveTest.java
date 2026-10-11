@@ -12,6 +12,22 @@ class CinematicMoveTest {
     private CinematicMove plan(int style,ShotAdvisor.Space space){
         return CinematicMove.plan(camera,focus,eye,16,style,space,30,16.0/9);
     }
+    @Test void shotsKeepTravellingAfterFourteenSecondsWithoutAbruptAcceleration(){
+        for(int style=0;style<10;style++){
+            var move=plan(style,open);
+            assertTrue(move.at(300).camera().distance(move.at(280).camera())>0.001,
+                    "Long shots must still move after fourteen seconds");
+            assertTrue(move.durationTicks()>=360 && move.durationTicks()<=520);
+        }
+    }
+    @Test void descendingAndDiagonalMovesHaveDistinctVerticalTravel(){
+        assertTrue(plan(5,open).at(10000).camera().y()<camera.y());
+        for(int style=6;style<10;style++){
+            Point end=plan(style,open).at(10000).camera();
+            assertTrue(Math.abs(end.x()-camera.x())>.1,"Diagonal shot needs sideways travel");
+            assertTrue(Math.abs(end.y()-camera.y())>.1,"Diagonal shot needs vertical travel");
+        }
+    }
     @Test void dollyInApproachesOneFixedSubjectWithoutReversingOrSwaying(){
         var move=plan(0,open);double lastDistance=8;
         for(int tick=0;tick<=move.durationTicks();tick++){

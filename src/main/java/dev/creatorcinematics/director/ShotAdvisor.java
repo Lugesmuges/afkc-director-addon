@@ -7,6 +7,8 @@ public final class ShotAdvisor {
     public interface Space {
         default double viewDistance(){return Double.POSITIVE_INFINITY;}
         boolean clear(Point from,Point to);
+        default boolean reachable(Point from,Point to){return clear(from,to);}
+        default boolean windowView(Point camera,Point focus){return false;}
         boolean visible(Point from,Point focus);
         default boolean unobstructed(Point from,Point to){return clear(from,to);}
         default boolean lensClear(Point from,Point to){return unobstructed(from,to);}

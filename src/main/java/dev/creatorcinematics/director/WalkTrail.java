@@ -19,6 +19,16 @@ public final class WalkTrail {
     }
     public void clear(){points.clear();previous=null;segment=0;}
     public int size(){return points.size();}
+    /** Bounded candidate waypoints; every connecting leg is rechecked against today's blocks. */
+    public List<Point> nearby(Point eye,double radius){
+        var result=new ArrayList<Point>();
+        for(int i=points.size()-1;i>=0 && result.size()<32;i--){
+            Point p=points.get(i).point;
+            if(p.distance(eye)>radius || result.stream().anyMatch(other->other.distance(p)<1))continue;
+            result.add(p);
+        }
+        return List.copyOf(result);
+    }
     public RouteGuide route(Point eye,double radius,ShotAdvisor.Space space){
         int nearest=-1;double distance=2;
         for(int i=points.size()-1;i>=0;i--){double d=points.get(i).point.distance(eye);if(d<distance){nearest=i;distance=d;}}

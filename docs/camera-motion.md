@@ -20,4 +20,14 @@ Zusätzlich hielt die Bildprüfung nach einem verworfenen Schnitt das letzte Bil
 
 Das Heranfahren ist eine Dolly-Fahrt: Die virtuelle Kamera bewegt sich durch den Raum. Ein optischer Zoom würde stattdessen den Bildwinkel verändern. Die räumliche Fahrt wurde hier bewusst gewählt; dadurch bleibt der FOV unverändert. [StudioBinder: Dolly-Fahrt und Unterschied zum Zoom](https://www.studiobinder.com/blog/dolly-shot-camera-movements/).
 
+## Alpha.6: längere Einstellungen, Fenster und Übergänge
+
+Nach dem Feedback zur Alpha.5 dauern normale Fahrten 18–26 Sekunden. Der Weg bleibt maximal 2,8 Blöcke lang, daher ist die Bewegung langsamer. Die quintische Kurve beginnt und endet weiterhin mit Geschwindigkeit und Beschleunigung null. Zehn Richtungsvarianten umfassen Dolly vor/zurück, seitlich links/rechts, auf/ab und vier Diagonalen. Gangfahrten laufen 18 Sekunden; ein kleinerer Zielvorlauf reduziert ihre native Bewegungsgeschwindigkeit. Kollisionsbedingter Abbruch bleibt jederzeit möglich.
+
+Die Folge kombiniert Totalen, Spieleraufnahmen und die bisherigen Bau-/Detailvorschläge. Spieleransichten wechseln bevorzugt Vorderseite, Seite, Rückseite und Gegenseite. Wenn aktuelle Laufspuren einen erreichbaren Innenraum belegen, kann eine Aufnahme durch dessen Fenster auf den Spieler entstehen. Glasdurchsicht wird nur für normales und gefärbtes Glas freigegeben; die Kamera kollidiert weiterhin damit. Ein Weg über höchstens einen historischen, erneut geprüften Wegpunkt reicht für die Auswahl. Diese begrenzte Suche ist keine allgemeine Gebäudenavigation.
+
+Einstellungswechsel verwenden eine Schwarzblende: 0,6 Sekunden sanft abdunkeln, erst bei vollständiger Deckung schneiden, anschließend eine Sekunde aufblenden. Die Berechnung läuft pro Renderbild über monotone Zeit. Neue Suchversuche dürfen die Aufblende nicht unterbrechen. Passive Serverkorrekturen nutzen denselben Weg. Es wird kein Zwischenflug durch unbekannte Wände und keine zweite Szene für eine Überlagerung erzeugt. Originale Balken sowie AFK-Ein-/Ausstieg bleiben erhalten.
+
+Das sind gestalterische Startwerte für diese Alpha. Reale FPS und die Aufnahme-Framerate beeinflussen weiterhin die wahrgenommene Flüssigkeit; längere Bewegung ersetzt keinen Hardwaretest.
+
 Die Umsetzung ist eigene Add-on-Logik für die Schnittstellen von AFKC. Originalquellcode wird nicht mitverteilt. Geometrische Tests ersetzen weiterhin keine ästhetische Beurteilung am tatsächlichen Bauwerk und Shader.

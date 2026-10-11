@@ -3,13 +3,22 @@ package dev.creatorcinematics.director;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.*;
+import java.util.List;
 import net.minecraft.world.phys.*;
 
 /** Reads only the current client world. Never requests chunks or moves the player. */
 public final class WorldSpace implements ShotAdvisor.Space {
     private final Minecraft client;
     private static final double MARGIN=0.25;
-    public WorldSpace(Minecraft client) { this.client=client; }
+    private final List<Point> waypoints;
+    private List<Point> reachableWaypoints;
+    private Point reachableOrigin;
+    public WorldSpace(Minecraft client) { this(client,List.of()); }
+    public WorldSpace(Minecraft client,List<Point> waypoints) { this.client=client;this.waypoints=waypoints; }
     public static Vec3 vec(Point p){return new Vec3(p.x(),p.y(),p.z());}
     public static Point point(Vec3 p){return new Point(p.x,p.y,p.z);}
     @Override public double viewDistance(){
@@ -23,6 +32,30 @@ public final class WorldSpace implements ShotAdvisor.Space {
     }
     private BlockHitResult ray(Point from,Point to) {
         return client.level.clip(new ClipContext(vec(from),vec(to),ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,client.player));
+    }
+    private static boolean window(BlockState state){
+        return state.is(Blocks.GLASS) || state.is(Blocks.GLASS_PANE)
+                || state.getBlock() instanceof StainedGlassBlock || state.getBlock() instanceof StainedGlassPaneBlock;
+    }
+    private BlockHitResult sightRay(Point from,Point to){
+        return client.level.clip(new ClipContext(vec(from),vec(to),ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,client.player){
+            @Override public VoxelShape getBlockShape(BlockState state,BlockGetter world,BlockPos pos){
+                return window(state)?Shapes.empty():super.getBlockShape(state,world,pos);
+            }
+        });
+    }
+    @Override public boolean reachable(Point from,Point to){
+        if(clear(from,to))return true;
+        if(!from.equals(reachableOrigin)){
+            reachableOrigin=from;
+            reachableWaypoints=waypoints.stream().filter(p->clear(from,p)).toList();
+        }
+        return reachableWaypoints.stream().anyMatch(p->clear(p,to));
+    }
+    @Override public boolean windowView(Point camera,Point focus){
+        if(!loaded(camera) || client.level.canSeeSky(BlockPos.containing(vec(camera))))return false;
+        var hit=ray(camera,focus);
+        return hit.getType()==HitResult.Type.BLOCK && window(client.level.getBlockState(hit.getBlockPos())) && visible(camera,focus);
     }
     @Override public boolean clear(Point from,Point to) {
         if(client.player==null || client.level==null) return false;
@@ -47,14 +80,14 @@ public final class WorldSpace implements ShotAdvisor.Space {
     @Override public boolean visible(Point from,Point focus) {
         int steps=Math.max(1,(int)Math.ceil(from.distance(focus)));
         for(int i=0;i<=steps;i++) if(!loaded(from.lerp(focus,(double)i/steps))) return false;
-        var hit=ray(from,focus);
+        var hit=sightRay(from,focus);
         // Edited block centres can be solid. Seeing that block's surface is sufficient.
         return hit.getType()==HitResult.Type.MISS || hit.getLocation().distanceTo(vec(focus))<=1.05;
     }
     @Override public boolean unobstructed(Point from,Point to){
         int steps=Math.max(1,(int)Math.ceil(from.distance(to)));
         for(int i=0;i<=steps;i++)if(!loaded(from.lerp(to,(double)i/steps)))return false;
-        return ray(from,to).getType()==HitResult.Type.MISS;
+        return sightRay(from,to).getType()==HitResult.Type.MISS;
     }
     @Override public boolean lensClear(Point from,Point to){
         if(!unobstructed(from,to))return false;
@@ -72,14 +105,20 @@ public final class WorldSpace implements ShotAdvisor.Space {
             var hit=client.level.clip(new ClipContext(vec(camera),vec(end),ClipContext.Block.COLLIDER,ClipContext.Fluid.ANY,client.player));
             return hit.getType()==HitResult.Type.BLOCK && loaded(point(hit.getLocation()));
         }))return false;
+        // The local actor can still fill half the image with a narrow lens beyond four blocks.
+        if(client.player!=null && !client.player.isSpectator() && !client.player.isInvisible()
+                && cropped(camera,direction,fov,aspect,client.player))return false;
         for(var entity:client.level.getEntities((net.minecraft.world.entity.Entity)null,new AABB(vec(camera),vec(camera)).inflate(4),
-                entity->entity instanceof net.minecraft.world.entity.LivingEntity && !entity.isSpectator() && !entity.isInvisible())){
-            var box=entity.getBoundingBox();
-            if(ray(camera,point(box.getCenter())).getType()!=HitResult.Type.MISS)continue;
-            if(FrameQuality.croppedActor(camera,direction,fov,aspect,new Point(box.minX,box.minY,box.minZ),
-                    new Point(box.maxX,box.maxY,box.maxZ)))return false;
+                entity->entity!=client.player && entity instanceof net.minecraft.world.entity.LivingEntity && !entity.isSpectator() && !entity.isInvisible())){
+            if(cropped(camera,direction,fov,aspect,entity))return false;
         }
         return true;
+    }
+    private boolean cropped(Point camera,Point direction,double fov,double aspect,net.minecraft.world.entity.Entity entity){
+        var box=entity.getBoundingBox();
+        if(sightRay(camera,point(box.getCenter())).getType()!=HitResult.Type.MISS)return false;
+        return FrameQuality.croppedActor(camera,direction,fov,aspect,new Point(box.minX,box.minY,box.minZ),
+                new Point(box.maxX,box.maxY,box.maxZ));
     }
     @Override public Point surface(Point camera,Point focus,Point min,Point max) {
         int steps=Math.max(1,(int)Math.ceil(camera.distance(focus)));

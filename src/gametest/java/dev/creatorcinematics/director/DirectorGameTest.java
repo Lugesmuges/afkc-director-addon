@@ -50,7 +50,7 @@ public final class DirectorGameTest implements FabricClientGameTest {
                 choose.invoke(director,client);
                 if(route.get(director)!=null && !rejected.getBoolean(director)){
                     var duration=director.getClass().getDeclaredField("currentShotDurationTicks");duration.setAccessible(true);
-                    check(duration.getInt(director)>=100 && duration.getInt(director)<=120,"Guidance changed native duration");
+                    check(duration.getInt(director)>=360,"Guided interior shot is too short");
                     return;
                 }
             }
@@ -111,6 +111,10 @@ public final class DirectorGameTest implements FabricClientGameTest {
                 Point close=WorldSpace.point(client.player.getEyePosition().add(0,0,-2));
                 check(!FrameQuality.acceptable(close,new Point(0,0,1),37,16.0/9,new WorldSpace(client)),
                         "A large foreground player cropped by the frame was accepted");
+                Point far=WorldSpace.point(client.player.getEyePosition().add(0,0,-6));
+                Point direction=new Point(.47,-.1,1);direction=direction.scale(1/direction.length());
+                check(!new WorldSpace(client).framingClear(far,direction,30,16.0/9),
+                        "A player clipped at the frame edge beyond four blocks was accepted");
             });
             context.waitTicks(20);
             context.runOnClient(client->{
@@ -130,7 +134,7 @@ public final class DirectorGameTest implements FabricClientGameTest {
                             "Enabled director still adds artificial camera shake");
                     var duration=director.getClass().getDeclaredField("currentShotDurationTicks");duration.setAccessible(true);
                     int ticks=duration.getInt(director);
-                    if(ticks<200 || ticks>280)regressions.add("Steady shot is too short or too long: "+ticks);
+                    if(ticks<360 || ticks>520)regressions.add("Steady shot is too short or too long: "+ticks);
                     var credits=AfkCinematicsClient.class.getDeclaredField("creditsTicksRemaining");credits.setAccessible(true);
                     check(credits.getInt(singleton.get(null))==0,"Original on-screen credit is still enabled");
                 } catch(ReflectiveOperationException e){throw new AssertionError(e);}
@@ -179,6 +183,7 @@ public final class DirectorGameTest implements FabricClientGameTest {
                 double planned=move.at(119).camera().distance(move.at(0).camera());
                 check(Math.abs(travelled-planned)<0.03,"Steady shot did not follow its planned travel: actual="+travelled+", planned="+planned);
             });
+            TransitionScene.verify(context);
             context.runOnClient(client->{
                 try {
                     var singleton=AfkCinematicsClient.class.getDeclaredField("instance");singleton.setAccessible(true);
@@ -322,7 +327,7 @@ public final class DirectorGameTest implements FabricClientGameTest {
             Vec3 corridorStart=context.computeOnClient(client->CinematicCameraRig.getInterpolatedPosition(1));
             context.waitTicks(2);
             context.takeScreenshot("director-corridor-start");
-            for(int i=0;i<90;i++){
+            for(int i=0;i<180;i++){
                 context.waitTick();
                 context.runOnClient(client->{
                     Vec3 camera=CinematicCameraRig.getInterpolatedPosition(1);
@@ -337,6 +342,7 @@ public final class DirectorGameTest implements FabricClientGameTest {
             context.takeScreenshot("director-corridor-corner");
             context.runOnClient(client->AfkCinematicsClient.markInputActivity());
             context.waitTicks(12);
+            WindowScene.verify(context,server);
             WideScene.setup(context,server);
             int wideOriginalFov=context.computeOnClient(client->client.options.fov().get());
             context.runOnClient(client->requestStart());context.waitTicks(30);

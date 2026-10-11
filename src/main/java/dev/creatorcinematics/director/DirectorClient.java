@@ -25,6 +25,7 @@ import java.io.IOException;
 public final class DirectorClient implements ClientModInitializer {
     public static final Logger LOG=LoggerFactory.getLogger("afkc_director");
     public static final DirectorConfig CONFIG=new DirectorConfig();
+    public static final ShotTransition TRANSITION=new ShotTransition();
     private static ActivityMemory MEMORY=new ActivityMemory();
     private static final ActivityArchive ARCHIVE=new ActivityArchive(FabricLoader.getInstance().getConfigDir().resolve("afkc-director-memory"));
     private static String worldKey,dimensionKey;
@@ -161,6 +162,18 @@ public final class DirectorClient implements ClientModInitializer {
             if(shot!=null)return shot;
         }
         return null;
+    }
+    public static ShotAdvisor.Advice characterShot(Minecraft client,int sequence){
+        if(!CONFIG.enabled || client.player==null || client.level==null || foreignCamera(client))return null;
+        Point eye=WorldSpace.point(client.player.getEyePosition());
+        var space=new WorldSpace(client,trail.nearby(eye,CONFIG.radius));
+        Point facing=WorldSpace.point(client.player.getLookAngle());
+        double aspect=(double)client.getWindow().getWidth()/Math.max(1,client.getWindow().getHeight());
+        if(sequence%2==0){
+            var window=CharacterShot.plan(eye,facing,sequence,CONFIG.radius,space,true,aspect);
+            if(window!=null)return window;
+        }
+        return CharacterShot.plan(eye,facing,sequence,CONFIG.radius,space,false,aspect);
     }
     public static ShotAdvisor.Advice advise(Minecraft client,Point nativeCamera) {
         if(!CONFIG.enabled || client.player==null || client.level==null || foreignCamera(client)) return null;
